@@ -24,5 +24,6 @@
   :components ((:module "src"
                 :components
                 ((:file "package"))))
-  :description ""
+  :serial t
+  :description "Optimizer for Trivia based on (Emilie 2006)"
   :in-order-to ((test-op (load-op trivia.emilie2006.test))))
