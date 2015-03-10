@@ -30,7 +30,7 @@ form-to-form basis, and the types are detected from the predicate form.
 We used =:type-i= package for this purpose. After the types are detected,
 one of the following translation rules are applied iteratively.
 
-*** If-Fusion
+*** Fusion
 
 Consider the following match:
 
@@ -133,7 +133,7 @@ IfSwapping: if(c1,i1,nop);if(c2,i2,nop)→if(c2,i2,nop);if(c1,i1,nop) IF c1⊥c2
 ** Transformation Strategy
 
 The quality of the resulting code is affected by the strategy for selecting
-which rule to apply. We again followed the simple Innermost strategy in
+which rule to apply in what order. We again followed the simple strategy in
 (Emillie 2006).
 
 #+BEGIN_QUOTE
@@ -147,6 +147,9 @@ describes how the rewrite system OptSys should be applied to normalize a PIL pro
 : Innermost( repeat(ConstProp | DeadVarElim | Inlining | LetFusion | IfFusion | IfSwapping) ;
 :            repeat(IfInterleaving))
 
+Now in our implementation this is simplified as follows:
+
+: Innermost( repeat( Fusion | Swapping) ; repeat(Interleaving))
 
 ** Usage
 
