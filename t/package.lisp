@@ -48,7 +48,17 @@
             ;; interleaved
             `((type (or fixnum string)) body1)
             `((type (or float string)) body2)
-            '(not string)))))))
+            '(not string))))))
+
+  
+
+  ;; however, without this constraint, two clauses are not compatible
+  (is (= 2
+         (length
+          (print
+           (interleaving
+            `((type (or fixnum string)) body1)
+            `((type (or float string)) body2)))))))
 
 (eval-when (:load-toplevel :execute)
   (run! :trivia.emilie2006))
