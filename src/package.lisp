@@ -7,8 +7,9 @@
 (defpackage trivia.emilie2006
   (:use :cl :trivia :alexandria :type-i)
   (:export
-   #:if-fusion
-   #:interleaving))
+   #:fusion
+   #:interleaving
+   #:swapping))
 (in-package :trivia.emilie2006)
 
 ;; blah blah blah.

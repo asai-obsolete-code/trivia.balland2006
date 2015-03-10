@@ -23,7 +23,7 @@
   ;; because the two clauses are merged
   (is (= 1
          (length
-          (if-fusion
+          (fusion
            `((cons
               (guard1 x (= 1 x))
               (guard1 y (null y))) body1)

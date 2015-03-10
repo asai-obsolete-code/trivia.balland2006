@@ -22,16 +22,16 @@
     (declare (ignore x))
     (gensym name)))
 
-(defun if-fusion (c1 c2 &optional (under t))
+(defun fusion (c1 c2 &optional (under t))
   (ematch* (c1 c2)
     (((list p1 body1)
       (list p2 body2))
-     (%if-fusion
+     (%fusion
       `(,(pattern-expand-all p1) ,body1)
       `(,(pattern-expand-all p2) ,body2)
       under))))
 
-(defun %if-fusion (c1 c2 under)
+(defun %fusion (c1 c2 under)
   (match* (c1 c2)
     (((list ($guard1 s1 (property :type type1) test1 more1) body1)
       (list ($guard1 s2 (property :type type2) test2 more2) body2))
