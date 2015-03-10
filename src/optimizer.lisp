@@ -35,8 +35,8 @@
   (match* (c1 c2)
     (((list ($guard1 s1 (property :type type1) test1 more1) body1)
       (list ($guard1 s2 (property :type type2) test2 more2) body2))
-     (let ((type1 `(and ,type1 ,(test-type test1)))
-           (type2 `(and ,type2 ,(test-type test2))))
+     (let ((type1 `(and ,type1 ,(test-type (? s1 test1))))
+           (type2 `(and ,type2 ,(test-type (? s2 test2)))))
        (if (type-equal type1 type2 under)
            (values
             (with-gensyms (fusion)
@@ -75,8 +75,8 @@
   (match* (c1 c2)
     (((list ($guard1 s1 (and o1 (property :type type1)) test1 more1) body1)
       (list ($guard1 s2 (and o2 (property :type type2)) test2 more2) body2))
-     (let ((type1 `(and ,type1 ,(test-type test1)))
-           (type2 `(and ,type2 ,(test-type test2))))
+     (let ((type1 `(and ,type1 ,(test-type (? s1 test1))))
+           (type2 `(and ,type2 ,(test-type (? s2 test2)))))
        (if (type-disjointp type1 type2 under) ;; under...?
            (values
             (with-gensyms (il)
@@ -102,10 +102,10 @@
 
 (defun %swapping (c1 c2 under)
   (match* (c1 c2)
-    (((list ($guard1 _ (property :type type1) test1 _) _)
-      (list ($guard1 _ (property :type type2) test2 _) _))
-     (let ((type1 `(and ,type1 ,(test-type test1)))
-           (type2 `(and ,type2 ,(test-type test2))))
+    (((list ($guard1 s1 (property :type type1) test1 _) _)
+      (list ($guard1 s2 (property :type type2) test2 _) _))
+     (let ((type1 `(and ,type1 ,(test-type (? s1 test1))))
+           (type2 `(and ,type2 ,(test-type (? s2 test2)))))
        (if (type-disjointp type1 type2 under) ;; under...?
            (values (list c2 c1) t)
            (list c1 c2))))
