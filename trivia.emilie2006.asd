@@ -20,10 +20,10 @@
   :author "Masataro Asai"
   :mailto "guicho2.71828@gmail.com"
   :license "LLGPL"
-  :depends-on (:trivia :type-r :type-i)
-  :components ((:module "src"
-                :components
-                ((:file "package"))))
+  :depends-on (:trivia :type-i)
+  :pathname "src/"
+  :components ((:file "package")
+               (:file "optimizer"))
   :serial t
   :description "Optimizer for Trivia based on (Emilie 2006)"
   :in-order-to ((test-op (load-op trivia.emilie2006.test))))

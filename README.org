@@ -81,7 +81,6 @@ Consider the following match is done under the environment in which `what' is kn
 Since `cons' and `null' are the exhaustive partition of type `list', this can be optimized into
 
 #+BEGIN_SRC lisp
-#+nil
 (match1 what
   ((guard1 it (consp it)) body1)
   (_                      body2))

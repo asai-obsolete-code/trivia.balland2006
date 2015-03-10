@@ -5,7 +5,10 @@
 
 (in-package :cl-user)
 (defpackage trivia.emilie2006
-  (:use :cl :trivia :alexandria :type-i))
+  (:use :cl :trivia :alexandria :type-i)
+  (:export
+   #:if-fusion
+   #:interleaving))
 (in-package :trivia.emilie2006)
 
 ;; blah blah blah.
