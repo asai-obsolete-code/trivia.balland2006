@@ -46,17 +46,15 @@
    (print
     (interleave
      (e '((cons 1 2) body1))
-     (e '((null) body2))
-     'list)))
+     (e '((null) body2)))))
 
   (is-true
    (print
     (interleave
      ;; under (not string), two patterns are incompatible and can be
      ;; interleaved
-     (e '((type (or fixnum string)) body1))
-     (e '((type (or float string)) body2))
-     '(not string))))
+     (e '((type fixnum) body1))
+     (e '((type float) body2)))))
 
   ;; however, without this constraint, two clauses are not compatible
   (is-false
@@ -68,24 +66,20 @@
   (is-true
    (xor
     (swappable
-     (e '((type (or fixnum string)) body1))
-     (e '((type (or float string)) body2))
-     '(not string))
+     (e '((type fixnum) body1))
+     (e '((type float) body2)))
     (swappable
-     (e '((type (or float string)) body2))
-     (e '((type (or fixnum string)) body1))
-     '(not string))))
+     (e '((type float) body2))
+     (e '((type fixnum) body1)))))
   
   (is-false
    (swappable
     (e '((type (or fixnum string)) body1))
-    (e '((type (or float string)) body2))
-    t))
+    (e '((type (or float string)) body2))))
   (is-false
    (swappable
     (e '((type (or float string)) body2))
-    (e '((type (or fixnum string)) body1))
-    t)))
+    (e '((type (or fixnum string)) body1)))))
 
 (test run
   (finishes
@@ -107,6 +101,13 @@
     `(match '(double-float 0.0d0 1.0d0)
        ((general-real-type low high) (list low high))))))
 
+#+nil
+(print
+ (let ((*optimizer* :emilie2006))
+   (macroexpand
+    `(match '(double-float 0.0d0 1.0d0)
+       ((cons 0 b) b)
+       ((cons 1 b) b)))))
 
 (eval-when (:load-toplevel :execute)
   (run! :trivia.emilie2006))

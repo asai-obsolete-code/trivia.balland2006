@@ -5,11 +5,28 @@
 (defoptimizer :emilie2006 (clauses)
   (let ((% clauses))
     (iter (for prev = %)
+          ;; (setf % (apply-or-grounding %))
           (setf % (apply-swapping     %))
           (setf % (apply-fusion       %))
           (setf % (apply-interleaving %))
           (until (equal % prev)))
     %))
+
+;;; or lifting
+
+;; (defun apply-or-grounding (clauses)
+;;   (mapcar #'ground-or clauses))
+;; 
+;; (defun ground-or (clause)
+;;   (ematch clause
+;;     ((list (list* 'guard1 *) _) clause)
+;;     ((list (list* 'or1 subpatterns) body)
+;;      `((guard
+;;         ,it
+;;         (match ,it
+;;           ,@(mapcar (lambda (p) `(,p t)) subpatterns))))
+    
+
 
 ;;; Fusion
 
@@ -17,14 +34,22 @@
   (mapcar #'fuse (divide-clauses  clauses #'fusiblep)))
 
 (defun divide-clauses (clauses fn)
+  (ematch clauses
+    ((list) nil)
+    ((list c) (list (list c)))
+    ((list* _ _)
   (iter (for c in clauses)
         (with tmp = nil)
+           (with acc = nil)
         (if (emptyp tmp)
             (push c tmp)
-            (if (apply fn (car tmp) c)
+               (if (funcall fn (car tmp) c)
                 (push c tmp)
-                (progn (collect (nreverse tmp))
-                       (setf tmp (list c)))))))
+                   (progn (push (nreverse tmp) acc)
+                          (setf tmp (list c)))))
+           (finally
+            (push (nreverse tmp) acc)
+            (return (nreverse acc)))))))
 
 (defun type-disjointp (t1 t2)
   (subtypep `(and ,t1 ,t2) 'nil))
@@ -46,6 +71,8 @@
   (union x y :test #'equal))
 
 (defun fuse (clauses)
+  (unless (cdr clauses)
+    (return-from fuse (car clauses)))
   ;; assumes all clauses are fusible
   (with-gensyms (fusion)
     (labels ((sym  (c) (ematch c ((list ($guard1 x (property :type _) _ _) _) x)))
@@ -56,9 +83,9 @@
              (generator-alist (x) (plist-alist (subst fusion (sym x) (more x)))))
       (let* ((c (first clauses))
              (more1 (mapcar #'generator-alist clauses))
-             (generators (reduce #'gen-union (mapcar #'car more1)))
+             (generators (reduce #'gen-union (mapcar (curry #'mapcar #'car) more1)))
              (tmps (mapcar (gensym* "TMP") generators))
-             (more2 (mapcar #'cons generators tmps)))
+             (more2 (mapcar #'cons generators (mapcar #'pattern-expand-all tmps))))
         `((guard1 (,fusion :type ,(type c))
                   ,(subst fusion (sym c) (test c))
                   ,@(alist-plist more2))
