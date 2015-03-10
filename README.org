@@ -11,7 +11,7 @@ c.f.
    Emilie Balland, Pierre-Etienne Moreau. Optimizing pattern matching compilation by program
    transformation. [Technical Report] 2006, pp.19. <inria-00001127v2>
 
-** Notes
+** Patterns Transformation Rules
 
 The compatibility of test-forms of guard1 pattern is determined in
 form-to-form basis. Two test-forms of a guard1 patterns are equivalent
@@ -129,6 +129,20 @@ subject to be merged thanks to a smart strategy.
 
 IfSwapping: if(c1,i1,nop);if(c2,i2,nop)→if(c2,i2,nop);if(c1,i1,nop) IF c1⊥c2
 #+END_QUOTE
+
+** Transformation Strategy
+
+#+BEGIN_QUOTE
+Using basic strategy operators such as Innermost(s) (which applies s as many times as
+possible, starting from the leaves), s1 | s2 (which applies s1 or s2 indifferently), repeat(s)
+(which applies s as many times as possible, returning the last unfailing result), and r1 ; r2
+(which applies s1, and then s2 if s1 did not failed), we can easily define a strategy which
+describes how the rewrite system OptSys should be applied to normalize a PIL program:
+#+END_QUOTE
+
+: Innermost( repeat(ConstProp | DeadVarElim | Inlining | LetFusion | IfFusion | IfSwapping) ;
+:            repeat(IfInterleaving))
+
 
 ** Usage
 
