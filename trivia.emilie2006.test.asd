@@ -14,7 +14,8 @@
   :author "Masataro Asai"
   :license "LLGPL"
   :depends-on (:trivia.emilie2006
-               :fiveam)
+               :fiveam
+               :type-r)
   :components ((:module "t"
                 :components
                 ((:file "package"))))

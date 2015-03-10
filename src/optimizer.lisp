@@ -80,6 +80,8 @@
   ;; be more conservative than Emilie 2006:
   ;; apply only once by each call
   (ematch clauses
+    ((list) nil)
+    ((list _) clauses)
     ((list* c1 (and rest1 (list* c2 rest2)))
      (if-let ((c12 (interleave c1 c2 under)))
        (cons c12 rest2)
@@ -102,7 +104,7 @@
 
 (defun apply-swapping (clauses &optional (under t))
   ;; runs swap sort
-  (let* ((v (coerce 'vector clauses))
+  (let* ((v (coerce clauses 'vector))
          (len (length v)))
     (iter
       (while
@@ -111,7 +113,7 @@
                 (when (swappable (aref v i) (aref v j) under)
                   (rotatef (aref v i) (aref v j))
                   (leave t)))))
-    (coerce 'list v)))
+    (coerce v 'list)))
 
 
 (defun swappable (c1 c2 &optional (under t))

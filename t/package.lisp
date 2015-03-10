@@ -9,7 +9,8 @@
         :trivia
         :trivia.emilie2006
         :alexandria
-        :fiveam))
+        :fiveam
+        :type-r))
 (in-package :trivia.emilie2006.test)
 
 (defun e (clause)
@@ -85,6 +86,27 @@
     (e '((type (or float string)) body2))
     (e '((type (or fixnum string)) body1))
     t)))
+
+(test run
+  (finishes
+    (print
+     (macroexpand
+      `(match '(double-float 0.0d0 1.0d0)
+         ((general-real-type low high) (list low high))))))
+  (finishes
+    (print
+     (let ((*optimizer* :emilie2006))
+       (macroexpand
+        `(match '(double-float 0.0d0 1.0d0)
+           ((general-real-type low high) (list low high))))))))
+
+#+nil
+(print
+ (let ((*optimizer* :emilie2006))
+   (macroexpand
+    `(match '(double-float 0.0d0 1.0d0)
+       ((general-real-type low high) (list low high))))))
+
 
 (eval-when (:load-toplevel :execute)
   (run! :trivia.emilie2006))
