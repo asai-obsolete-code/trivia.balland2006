@@ -11,24 +11,24 @@ c.f.
    Emilie Balland, Pierre-Etienne Moreau. Optimizing pattern matching compilation by program
    transformation. [Technical Report] 2006, pp.19. <inria-00001127v2>
 
-** Patterns Transformation Rules
-
-The compatibility of test-forms of guard1 pattern is determined in
-form-to-form basis. Two test-forms of a guard1 patterns are equivalent
-if they are `equal' except for the specified symbol.
-
 In (Emillie 2006), their optimization rule reduces the number of
 assignments (let) and tests (if).  However, since current state-of-the-art
 common lisp implementations (namely, sbcl and ccl) eliminates unnecessary
 assignments by default, so we do not focus on the assignments in our compiler.
-
-The main focus is on reducing the number of conditional check, which may
-involve a function call and is costly. Assignment optimization in Section
+Thus, Assignment optimization in Section
 3.1, e.g., Constant Propagation, Dead Variable Elimination, Inlining,
 Let-Fusion are not considered.
 
-Instead, we implement Section 3.2 Reducing the number of tests, which
-describes: Fusion, Interleaving, Ifswapping.
+The main focus is on reducing the number of conditional check, which may
+involve a function call and is costly.  We implement Section 3.2 Reducing
+the number of tests, which describes: Fusion, Interleaving, Ifswapping.
+
+** Patterns Transformation Rules
+
+The compatibility of test-forms of guard1 pattern is determined in
+form-to-form basis, and the types are detected from the predicate form.
+We used =:type-i= package for this purpose. After the types are detected,
+one of the following translation rules are applied iteratively.
 
 *** If-Fusion
 
@@ -131,6 +131,10 @@ IfSwapping: if(c1,i1,nop);if(c2,i2,nop)→if(c2,i2,nop);if(c1,i1,nop) IF c1⊥c2
 #+END_QUOTE
 
 ** Transformation Strategy
+
+The quality of the resulting code is affected by the strategy for selecting
+which rule to apply. We again followed the simple Innermost strategy in
+(Emillie 2006).
 
 #+BEGIN_QUOTE
 Using basic strategy operators such as Innermost(s) (which applies s as many times as
