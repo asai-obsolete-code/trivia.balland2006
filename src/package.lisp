@@ -5,11 +5,15 @@
 
 (in-package :cl-user)
 (defpackage trivia.emilie2006
-  (:use :cl :trivia :alexandria :type-i)
+  (:use :cl :trivia :alexandria :type-i :iterate)
   (:export
-   #:fusion
-   #:interleaving
-   #:swapping))
+   #:apply-fusion
+   #:fusiblep
+   #:fuse
+   #:apply-interleaving
+   #:interleave
+   #:apply-swapping
+   #:swappable))
 (in-package :trivia.emilie2006)
 
 ;; blah blah blah.

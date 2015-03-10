@@ -20,7 +20,7 @@
   :author "Masataro Asai"
   :mailto "guicho2.71828@gmail.com"
   :license "LLGPL"
-  :depends-on (:trivia :type-i)
+  :depends-on (:trivia :type-i :iterate :alexandria)
   :pathname "src/"
   :components ((:file "package")
                (:file "optimizer"))
