@@ -28,7 +28,7 @@
 ;; run test with (run! test-name) 
 ;;   test as you like ...
 
-(test fuse
+(test fuse1
   ;; because the two clauses are merged
   (is-true
    (print
@@ -41,7 +41,7 @@
           (guard1 x (stringp x))
           (guard1 y (null y))) body2)))))))
 
-(test interleave
+(test interleave1
   (is-true
    (print
     (interleave
@@ -62,7 +62,7 @@
     (e '((type (or fixnum string)) body1))
     (e '((type (or float string)) body2)))))
 
-(test swap
+(test swap1
   (is-true
    (xor
     (swappable
@@ -81,18 +81,86 @@
     (e '((type (or float string)) body2))
     (e '((type (or fixnum string)) body1)))))
 
-(test run
+(def-fixture emilie2006 ()
+  (let ((*optimizer* :emilie2006))
+    (&body)))
+
+(test (or-pattern :fixture emilie2006)
+  ;; test to see if or-pattern is grounded
   (finishes
     (print
      (macroexpand
       `(match '(double-float 0.0d0 1.0d0)
-         ((general-real-type low high) (list low high))))))
+         ((or (cons 1 b) (cons 0 a)) (vector a b))
+         ((string a) a))))))
+
+
+(test (fuse2 :fixture emilie2006)
+  ;; test to see if or-pattern is grounded
   (finishes
     (print
-     (let ((*optimizer* :emilie2006))
-       (macroexpand
+     (macroexpand
         `(match '(double-float 0.0d0 1.0d0)
-           ((general-real-type low high) (list low high))))))))
+           ((or (cons 1 b) (cons 0 a)) (vector a b))
+           ((string a) a))))))
+
+(test (run :fixture emilie2006)
+  (finishes
+    (print
+     (macroexpand
+      `(match '(double-float 0.0d0 1.0d0)
+         ((cons 0 b) b)
+         ((cons 1 b) b))))))
+
+(defvar *twice* nil)
+
+(deftype once-cons ()
+  'cons)
+(defun once-consp (x)
+  (when *twice* (error "evaluated twice!"))
+  (setf *twice* t)
+  (consp x))
+
+(defvar form
+    '(match :does-not-match
+      ((guard1 it (once-consp it) 1 a) a)
+      ((guard1 it (once-consp it) 2 b) b)))
+
+(test twice
+  (print (macroexpand form))
+  (let ((*twice* nil))
+    (signals error (eval form))))
+
+(test (strict-once :fixture emilie2006)
+  (print (macroexpand form))
+  (let ((*twice* nil))
+    (finishes (eval form))))
+
+#+nil
+(test run-big
+  (finishes
+    (macroexpand
+     `(match '(double-float 0.0d0 1.0d0)
+        ((general-real-type low high) (list low high)))))
+
+  (match '(double-float 0.0d0 1.0d0)
+    ((general-real-type low high)
+     (is (= 0.0d0 low))
+     (is (= 1.0d0 high))))
+
+  (finishes
+    (let ((*optimizer* :emilie2006))
+      (macroexpand
+       `(match '(double-float 0.0d0 1.0d0)
+          ((general-real-type low high) (list low high))))))
+  
+  (in-optimizer :emilie2006)
+  (unwind-protect
+      (eval '(match '(double-float 0.0d0 1.0d0)
+              ((general-real-type low high)
+               (is (= 0.0d0 low))
+               (is (= 1.0d0 high)))))
+    (in-optimizer :trivial)))
 
 #+nil
 (print
@@ -100,14 +168,6 @@
    (macroexpand
     `(match '(double-float 0.0d0 1.0d0)
        ((general-real-type low high) (list low high))))))
-
-#+nil
-(print
- (let ((*optimizer* :emilie2006))
-   (macroexpand
-    `(match '(double-float 0.0d0 1.0d0)
-       ((cons 0 b) b)
-       ((cons 1 b) b)))))
 
 (eval-when (:load-toplevel :execute)
   (run! :trivia.emilie2006))
