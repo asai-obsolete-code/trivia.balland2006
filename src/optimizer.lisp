@@ -19,8 +19,8 @@
 
 (defun ground-or (clause)
   (ematch clause
-    ((list (list* 'guard1 *) _) clause)
-    ((list (and pattern (list* 'or1 subpatterns)) body)
+    ((list* (list* 'guard1 _) _) clause)
+    ((list* (and pattern (list* 'or1 subpatterns)) body)
      ;; overrides the default or1 compilation
      (let* ((vars (variables pattern))
             (syms (mapcar #'first vars)))
@@ -32,7 +32,7 @@
                                  ((list* var options)
                                   `(type ,(getf options :type) ,var)))
                                vars))
-                    ,body))
+                    ,@body))
              (declare (dynamic-extent (function ,fn)))
              (match2 ,it
                ,@(mapcar (lambda (pattern)
@@ -73,10 +73,10 @@
 
 (defun fusiblep (c1 c2)
   (ematch* (c1 c2)
-    (((list ($guard1 s1 (property :type type1) test1 _) _)
-      (list ($guard1 s2 (property :type type2) test2 _) _))
-     (let ((type1 `(and ,type1 ,(test-type (? s1 test1))))
-           (type2 `(and ,type2 ,(test-type (? s2 test2)))))
+    (((list* ($guard1 s1 _ test1 _) _)
+      (list* ($guard1 s2 _ test2 _) _))
+     (let ((type1 (test-type (? s1 test1)))
+           (type2 (test-type (? s2 test2))))
        (type= type1 type2)))))
 
 (defun gen-union (&optional x y)
@@ -87,11 +87,11 @@
     (return-from fuse clauses))
   ;; assumes all clauses are fusible
   (with-gensyms (fusion)
-    (labels ((sym  (c) (ematch c ((list ($guard1 x _ _ _) _) x)))
-             (type (c) (ematch c ((list ($guard1 _ (property :type x) _ _) _) x)))
-             (test (c) (ematch c ((list ($guard1 _ _ x _) _) x)))
-             (more (c) (ematch c ((list ($guard1 _ _ _ x) _) x)))
-             (body (c) (ematch c ((list ($guard1 _ _ _ _) x) x)))
+    (labels ((sym  (c) (ematch c ((list* ($guard1 x _ _ _) _) x)))
+             (type (c) (ematch c ((list* ($guard1 _ (property :type x) _ _) _) x)))
+             (test (c) (ematch c ((list* ($guard1 _ _ x _) _) x)))
+             (more (c) (ematch c ((list* ($guard1 _ _ _ x) _) x)))
+             (body (c) (ematch c ((list* ($guard1 _ _ _ _) x) x)))
              (generator-alist (x) (plist-alist (subst fusion (sym x) (more x)))))
       (if (every (curry #'eq t) (mapcar #'test clauses))
           ;; then level1 can handle it, and further fusion results in infinite recursion
@@ -104,12 +104,12 @@
             `(((guard1 (,fusion :type ,(type c))
                        ,(subst fusion (sym c) (test c))
                        ,@(alist-plist more2))
-               (match* ,tmps
+               (match2* ,tmps
                  ,@(mapcar (lambda (c m)
                              `(,(mapcar (lambda (gen)
                                           (or (cdr (assoc gen m :test #'equal)) '_))
                                         generators)
-                                ,(body c)))
+                                ,@(body c)))
                            clauses more1)))))))))
 
 ;;; Interleaving
@@ -127,16 +127,20 @@
 
 (defun interleave (c1 c2)
   (ematch* (c1 c2)
-    (((list ($guard1 s1 (and o1 (property :type type1)) test1 more1) body1)
-      (list ($guard1 s2 (and o2 (property :type type2)) test2 more2) body2))
-     (let ((type1 `(and ,type1 ,(test-type (? s1 test1))))
-           (type2 `(and ,type2 ,(test-type (? s2 test2)))))
-       (if (type-disjointp type1 type2)
+    (((list* ($guard1 s1 o1 test1 more1) body1)
+      (list* ($guard1 s2 o2 test2 more2) body2))
+     (let ((type1 (test-type (? s1 test1)))
+           (type2 (test-type (? s2 test2))))
+       (if (subtypep type1 nil)
+           c2
+           (if (and (type-disjointp type1 type2)
+                    (subtypep t `(and ,type1 ,type2)))
            (with-gensyms (il)
              `((guard1 ,il t)
-               (match ,il
-                 ((guard1 ,(list* s1 o1) ,test1 ,@more1) ,body1)
-                 ((guard1 ,(list* s2 o2) t ,@more2) ,body2)))))))))
+                   (match1 ,il
+                     ((guard1 ,(list* s1 o1) ,test1 ,@more1) ,@body1)
+                     ((guard1 ,(list* s2 o2) t ,@more2) ,@body2)
+                     ((guard1 ,il t) (next)))))))))))
 
 ;;; Swapping
 
@@ -156,10 +160,10 @@
 
 (defun swappable (c1 c2)
   (ematch* (c1 c2)
-    (((list ($guard1 s1 (property :type type1) test1 _) _)
-      (list ($guard1 s2 (property :type type2) test2 _) _))
-     (let ((type1 `(and ,type1 ,(test-type (? s1 test1))))
-           (type2 `(and ,type2 ,(test-type (? s2 test2)))))
+    (((list* ($guard1 s1 _ test1 _) _)
+      (list* ($guard1 s2 _ test2 _) _))
+     (let ((type1 (test-type (? s1 test1)))
+           (type2 (test-type (? s2 test2))))
        (and (type-disjointp type1 type2)
             (< (sxhash type1) (sxhash type2)))))))
 
