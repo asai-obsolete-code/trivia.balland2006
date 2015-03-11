@@ -134,7 +134,7 @@
        (if (type-disjointp type1 type2)
            (with-gensyms (il)
              `((guard1 ,il t)
-               (match* ,il
+               (match ,il
                  ((guard1 ,(list* s1 o1) ,test1 ,@more1) ,body1)
                  ((guard1 ,(list* s2 o2) t ,@more2) ,body2)))))))))
 
