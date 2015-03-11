@@ -130,7 +130,7 @@
            (type2 `(and ,type2 ,(test-type (? s2 test2)))))
        (if (type-disjointp type1 type2)
            (with-gensyms (il)
-             `((guard ,il t)
+             `((guard1 ,il t)
                (match* ,il
                  ((guard1 ,(list* s1 o1) ,test1 ,@more1) ,body1)
                  ((guard1 ,(list* s2 o2) t ,@more2) ,body2)))))))))
