@@ -13,7 +13,8 @@
    #:apply-interleaving
    #:interleave
    #:apply-swapping
-   #:swappable))
+   #:swappable)
+  (:shadowing-import-from :trivia :next))
 (in-package :trivia.emilie2006)
 
 ;; blah blah blah.
