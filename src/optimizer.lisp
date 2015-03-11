@@ -87,11 +87,11 @@
     (return-from fuse clauses))
   ;; assumes all clauses are fusible
   (with-gensyms (fusion)
-    (labels ((sym  (c) (ematch c ((list ($guard1 x (property :type _) _ _) _) x)))
+    (labels ((sym  (c) (ematch c ((list ($guard1 x _ _ _) _) x)))
              (type (c) (ematch c ((list ($guard1 _ (property :type x) _ _) _) x)))
-             (test (c) (ematch c ((list ($guard1 _ (property :type _) x _) _) x)))
-             (more (c) (ematch c ((list ($guard1 _ (property :type _) _ x) _) x)))
-             (body (c) (ematch c ((list ($guard1 _ (property :type _) _ _) x) x)))
+             (test (c) (ematch c ((list ($guard1 _ _ x _) _) x)))
+             (more (c) (ematch c ((list ($guard1 _ _ _ x) _) x)))
+             (body (c) (ematch c ((list ($guard1 _ _ _ _) x) x)))
              (generator-alist (x) (plist-alist (subst fusion (sym x) (more x)))))
       (if (every (curry #'eq t) (mapcar #'test clauses))
           ;; then level1 can handle it, and further fusion results in infinite recursion
