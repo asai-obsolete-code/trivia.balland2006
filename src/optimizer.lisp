@@ -43,20 +43,20 @@
 ;;; Fusion
 
 (defun apply-fusion (clauses)
-  (mapcar #'fuse (divide-clauses  clauses #'fusiblep)))
+  (mappend #'fuse (divide-clauses clauses #'fusiblep)))
 
 (defun divide-clauses (clauses fn)
   (ematch clauses
     ((list) nil)
     ((list c) (list (list c)))
     ((list* _ _)
-  (iter (for c in clauses)
-        (with tmp = nil)
+     (iter (for c in clauses)
+           (with tmp = nil)
            (with acc = nil)
-        (if (emptyp tmp)
-            (push c tmp)
+           (if (emptyp tmp)
+               (push c tmp)
                (if (funcall fn (car tmp) c)
-                (push c tmp)
+                   (push c tmp)
                    (progn (push (nreverse tmp) acc)
                           (setf tmp (list c)))))
            (finally
@@ -84,7 +84,7 @@
 
 (defun fuse (clauses)
   (unless (cdr clauses)
-    (return-from fuse (car clauses)))
+    (return-from fuse clauses))
   ;; assumes all clauses are fusible
   (with-gensyms (fusion)
     (labels ((sym  (c) (ematch c ((list ($guard1 x (property :type _) _ _) _) x)))
@@ -93,22 +93,25 @@
              (more (c) (ematch c ((list ($guard1 _ (property :type _) _ x) _) x)))
              (body (c) (ematch c ((list ($guard1 _ (property :type _) _ _) x) x)))
              (generator-alist (x) (plist-alist (subst fusion (sym x) (more x)))))
-      (let* ((c (first clauses))
-             (more1 (mapcar #'generator-alist clauses))
-             (generators (reduce #'gen-union (mapcar (curry #'mapcar #'car) more1)))
-             (tmps (mapcar (gensym* "TMP") generators))
-             (more2 (mapcar #'cons generators (mapcar #'pattern-expand-all tmps))))
-        `((guard1 (,fusion :type ,(type c))
-                  ,(subst fusion (sym c) (test c))
-                  ,@(alist-plist more2))
-          (match* ,tmps
-            ,@(mapcar (lambda (c m)
-                        `(,(mapcar (lambda (gen)
-                                     (or (cdr (assoc gen m :test #'equal)) '_))
-                                   generators)
-                           ,(body c)))
-                      clauses more1)))))))
-                    
+      (if (every (curry #'eq t) (mapcar #'test clauses))
+          ;; then level1 can handle it, and further fusion results in infinite recursion
+          clauses
+          (let* ((c (first clauses))
+                 (more1 (mapcar #'generator-alist clauses))
+                 (generators (reduce #'gen-union (mapcar (curry #'mapcar #'car) more1)))
+                 (tmps (mapcar (gensym* "TMP") generators))
+                 (more2 (mapcar #'cons generators (mapcar #'pattern-expand-all tmps))))
+            `(((guard1 (,fusion :type ,(type c))
+                       ,(subst fusion (sym c) (test c))
+                       ,@(alist-plist more2))
+               (match* ,tmps
+                 ,@(mapcar (lambda (c m)
+                             `(,(mapcar (lambda (gen)
+                                          (or (cdr (assoc gen m :test #'equal)) '_))
+                                        generators)
+                                ,(body c)))
+                           clauses more1)))))))))
+
 ;;; Interleaving
 
 (defun apply-interleaving (clauses)
