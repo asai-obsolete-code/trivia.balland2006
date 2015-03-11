@@ -5,7 +5,7 @@
 (defoptimizer :emilie2006 (clauses)
   (let ((% clauses))
     (iter (for prev = %)
-          ;; (setf % (apply-or-grounding %))
+          (setf % (apply-or-grounding %))
           (setf % (apply-swapping     %))
           (setf % (apply-fusion       %))
           (setf % (apply-interleaving %))
@@ -14,19 +14,31 @@
 
 ;;; or lifting
 
-;; (defun apply-or-grounding (clauses)
-;;   (mapcar #'ground-or clauses))
-;; 
-;; (defun ground-or (clause)
-;;   (ematch clause
-;;     ((list (list* 'guard1 *) _) clause)
-;;     ((list (list* 'or1 subpatterns) body)
-;;      `((guard
-;;         ,it
-;;         (match ,it
-;;           ,@(mapcar (lambda (p) `(,p t)) subpatterns))))
-    
+(defun apply-or-grounding (clauses)
+  (mapcar #'ground-or clauses))
 
+(defun ground-or (clause)
+  (ematch clause
+    ((list (list* 'guard1 *) _) clause)
+    ((list (and pattern (list* 'or1 subpatterns)) body)
+     ;; overrides the default or1 compilation
+     (let* ((vars (variables pattern))
+            (syms (mapcar #'first vars)))
+       (with-gensyms (it fn)
+         `((guard1 ,it t)
+           (flet ((,fn ,syms
+                    (declare
+                     ,@(mapcar (lambda-ematch
+                                 ((list* var options)
+                                  `(type ,(getf options :type) ,var)))
+                               vars))
+                    ,body))
+             (declare (dynamic-extent (function ,fn)))
+             (match2 ,it
+               ,@(mapcar (lambda (pattern)
+                           `(,pattern (,fn ,@syms)))
+                         subpatterns)
+               (_ (next))))))))))
 
 ;;; Fusion
 
