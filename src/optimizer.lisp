@@ -38,6 +38,9 @@
                ,@(mapcar (lambda (pattern)
                            `(,pattern (,fn ,@syms)))
                          subpatterns)
+               ;; 
+               ;;     +-- this (next) makes the failure propagate upwards correctly
+               ;;    / 
                (_ (next))))))))))
 
 ;;; Fusion
@@ -110,7 +113,11 @@
                                           (or (cdr (assoc gen m :test #'equal)) '_))
                                         generators)
                                 ,@(body c)))
-                           clauses more1)))))))))
+                           clauses more1)
+                 ;; 
+                 ;;     +-- this (next) makes the failure propagate upwards correctly
+                 ;;    / 
+                 (_ (next))))))))))
 
 ;;; Interleaving
 
@@ -135,12 +142,15 @@
            c2
            (if (and (type-disjointp type1 type2)
                     (subtypep t `(and ,type1 ,type2)))
-           (with-gensyms (il)
-             `((guard1 ,il t)
-                   (match1 ,il
+               (with-gensyms (il)
+                 `((guard1 ,il t)
+                   (match2 ,il
                      ((guard1 ,(list* s1 o1) ,test1 ,@more1) ,@body1)
                      ((guard1 ,(list* s2 o2) t ,@more2) ,@body2)
-                     ((guard1 ,il t) (next)))))))))))
+                     ;; 
+                     ;;     +-- this (next) makes the failure propagate upwards correctly
+                     ;;    / 
+                     (_ (next)))))))))))
 
 ;;; Swapping
 
