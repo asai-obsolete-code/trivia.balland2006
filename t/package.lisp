@@ -46,21 +46,37 @@
    (print
     (interleave
      (e '((cons 1 2) body1))
-     (e '((null) body2)))))
+     (e '((null) body2))
+     'list)))
 
-  (is-true
-   (print
-    (interleave
-     ;; under (not string), two patterns are incompatible and can be
-     ;; interleaved
-     (e '((type fixnum) body1))
-     (e '((type float) body2)))))
-
-  ;; however, without this constraint, two clauses are not compatible
+  ;; ;; rational and float are the exhaustive partition of real
+  ;; ;; IN MOST IMPLEMENTATIONS. see CLHS Issue REAL-NUMBER-TYPE:X3J13-MAR-89 Summary
+  ;; (is-true
+  ;;  (print
+  ;;   (interleave
+  ;;    (e '((type rational) body1))
+  ;;    (e '((type float) body2))
+  ;;    'real)))
+  ;; 
+  ;; ;; without assumption of `real', these are not exhaustive
+  ;; (is-false
+  ;;  (interleave
+  ;;   (e '((type rational) body1))
+  ;;   (e '((type float) body2))))
+  
+  ;; these are not disjoint
   (is-false
    (interleave
-    (e '((type (or fixnum string)) body1))
-    (e '((type (or float string)) body2)))))
+    (e '((type (or simple-vector simple-string)) body1))
+    (e '((type (or simple-vector simple-bit-vector)) body2))
+    'simple-array))
+  
+  ;; these are not exhaustive
+  (is-false
+   (interleave
+    (e '((type simple-string) body1))
+    (e '((type simple-bit-vector) body2))
+    'simple-array)))
 
 (test swap1
   (is-true

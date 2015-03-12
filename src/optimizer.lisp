@@ -132,16 +132,16 @@
        (cons c12 rest2)
        (cons c1 (apply-interleaving rest1))))))
 
-(defun interleave (c1 c2)
+(defun interleave (c1 c2 &optional (under t))
   (ematch* (c1 c2)
     (((list* ($guard1 s1 o1 test1 more1) body1)
       (list* ($guard1 s2 o2 test2 more2) body2))
-     (let ((type1 (test-type (? s1 test1)))
-           (type2 (test-type (? s2 test2))))
+     (let ((type1 `(and ,under ,(test-type (? s1 test1))))
+           (type2 `(and ,under ,(test-type (? s2 test2)))))
        (if (subtypep type1 nil)
            c2
            (if (and (type-disjointp type1 type2)
-                    (subtypep t `(and ,type1 ,type2)))
+                    (subtypep under `(or ,type1 ,type2))) ; exhaustive partition
                (with-gensyms (il)
                  `((guard1 ,il t)
                    (match2 ,il
