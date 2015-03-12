@@ -1,5 +1,7 @@
 
-* Trivia.Emilie2006 
+* Trivia.Emilie2006
+
+[[https://travis-ci.org/guicho271828/trivia.emilie2006][https://travis-ci.org/guicho271828/trivia.emilie2006.svg?branch=master]]
 
 This is an optimizer implementation based on (Emilie et.al. 2006).
 
