@@ -74,6 +74,9 @@
 (defun type-disjointp (t1 t2 &optional (under t))
   (subtypep `(and ,under ,t1 ,t2) nil))
 
+(defun type-exhaustivep (t1 t2 &optional (under t))
+  (and (type-disjointp t1 t2 under)
+       (subtypep under `(or ,t1 ,t2))))
 
 (defun type-equal (t1 t2 &optional (under t))
   (type= `(and ,under ,t1) `(and ,under ,t2)))
@@ -141,7 +144,7 @@
      (if-let ((c12 (interleave c1 c2 under)))
        (progn (format t "~&~<; ~@;interleaving ~_ ~W,~_ ~W~:>" (list c1 c2))
               (cons c12 rest2))
-       (cons c1 (apply-interleaving rest1))))))
+       (cons c1 (apply-interleaving rest1 under))))))
 
 (defun interleave (c1 c2 &optional (under t))
   (ematch* (c1 c2)
@@ -152,12 +155,11 @@
        (cond
          ((type-disjointp type1 under) c2)
          ((type-disjointp type2 under) c1)
-         ((and (type-disjointp type1 type2 under)
-               (subtypep under `(or ,type1 ,type2)))
+         ((type-exhaustivep type1 type2 under)
           ;; exhaustive partition
                (with-gensyms (il)
-                 `((guard1 ,il t)
-                   (match2 ,il
+                 `((guard1 (,il :type ,under) t)
+                   (match2+ ,il ,under
                      ((guard1 ,(list* s1 o1) ,test1 ,@more1) ,@body1)
                      ((guard1 ,(list* s2 o2) t ,@more2) ,@body2)
                      ;; 

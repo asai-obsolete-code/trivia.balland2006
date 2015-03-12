@@ -148,6 +148,12 @@
     (finishes (eval form))))
 
 #+nil
+(match2+ x real
+  ((type rational) body1)
+  ((type float) body2))
+
+
+#+nil
 (test run-big
   (finishes
     (macroexpand
