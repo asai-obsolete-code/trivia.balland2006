@@ -2,9 +2,9 @@
 
 (in-package :trivia.emilie2006)
 
-(defoptimizer :emilie2006 (clauses)
+(defoptimizer :emilie2006 (clauses &key (type t) &allow-other-keys)
   (let ((*print-length* 3))
-    (emilie2006 clauses)))
+    (emilie2006 clauses type)))
 
 (defun emilie2006 (clauses &optional (under t))
   (let ((% clauses))
@@ -39,7 +39,7 @@
                                vars))
                     ,@body))
              (declare (dynamic-extent (function ,fn)))
-             (match2 ,it
+             (match2+ ,it ,under
                ,@(mapcar (lambda (pattern)
                                 `(,pattern (,fn ,@syms)))
                               subpatterns)
