@@ -3,6 +3,7 @@
 (in-package :trivia.emilie2006)
 
 (defoptimizer :emilie2006 (clauses)
+  (let ((*print-length* 3))
   (let ((% clauses))
     (iter (for prev = %)
           (setf % (apply-or-grounding %))
@@ -10,7 +11,7 @@
           (setf % (apply-fusion       %))
           (setf % (apply-interleaving %))
           (until (equal % prev)))
-    %))
+      %)))
 
 ;;; or lifting
 
@@ -104,6 +105,7 @@
                  (generators (reduce #'gen-union (mapcar (curry #'mapcar #'car) more1)))
                  (tmps (mapcar (gensym* "TMP") generators))
                  (more2 (mapcar #'cons generators (mapcar #'pattern-expand-all tmps))))
+            (format t "~&~<; ~@;fusing~_ ~{~4t~A~^, ~_~}~:>" (list clauses))
             `(((guard1 (,fusion :type ,(type c))
                        ,(subst fusion (sym c) (test c))
                        ,@(alist-plist more2))
@@ -129,7 +131,8 @@
     ((list _) clauses)
     ((list* c1 (and rest1 (list* c2 rest2)))
      (if-let ((c12 (interleave c1 c2)))
-       (cons c12 rest2)
+       (progn (format t "~&~<; ~@;interleaving ~_ ~W,~_ ~W~:>" (list c1 c2))
+              (cons c12 rest2))
        (cons c1 (apply-interleaving rest1))))))
 
 (defun interleave (c1 c2 &optional (under t))
@@ -163,6 +166,8 @@
           (iter (for i from 1 below len)
                 (for j = (1- i))
                 (when (swappable (aref v i) (aref v j))
+                  (format t "~&~<; ~@;swapping~_ ~W,~_ ~W~:>"
+                          (list (aref v j) (aref v i)))
                   (rotatef (aref v i) (aref v j))
                   (leave t)))))
     (coerce v 'list)))
