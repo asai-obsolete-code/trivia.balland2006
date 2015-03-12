@@ -4,21 +4,25 @@
 
 (defoptimizer :emilie2006 (clauses)
   (let ((*print-length* 3))
+    (emilie2006 clauses)))
+
+(defun emilie2006 (clauses &optional (under t))
   (let ((% clauses))
     (iter (for prev = %)
-          (setf % (apply-or-grounding %))
-          (setf % (apply-swapping     %))
-          (setf % (apply-fusion       %))
-          (setf % (apply-interleaving %))
+          (setf % (apply-or-grounding % under))
+          (setf % (apply-swapping     % under))
+          (setf % (apply-fusion       % under))
+          (setf % (apply-interleaving % under))
           (until (equal % prev)))
-      %)))
+    %))
 
 ;;; or lifting
 
-(defun apply-or-grounding (clauses)
-  (mapcar #'ground-or clauses))
+(defun apply-or-grounding (clauses &optional (under t))
+  (mapcar (rcurry #'ground-or under) clauses))
 
-(defun ground-or (clause)
+(defun ground-or (clause &optional (under t))
+  (declare (ignorable under))
   (ematch clause
     ((list* (list* 'guard1 _) _) clause)
     ((list* (and pattern (list* 'or1 subpatterns)) body)
@@ -37,19 +41,19 @@
              (declare (dynamic-extent (function ,fn)))
              (match2 ,it
                ,@(mapcar (lambda (pattern)
-                           `(,pattern (,fn ,@syms)))
-                         subpatterns)
-               ;; 
-               ;;     +-- this (next) makes the failure propagate upwards correctly
-               ;;    / 
+                                `(,pattern (,fn ,@syms)))
+                              subpatterns)
+                      ;; 
+                      ;;     +-- this (next) makes the failure propagate upwards correctly
+                      ;;    / 
                (_ (next))))))))))
 
 ;;; Fusion
 
-(defun apply-fusion (clauses)
-  (mappend #'fuse (divide-clauses clauses #'fusiblep)))
+(defun apply-fusion (clauses &optional (under t))
+  (mappend #'fuse (divide-clauses clauses under)))
 
-(defun divide-clauses (clauses fn)
+(defun divide-clauses (clauses &optional (under t))
   (ematch clauses
     ((list) nil)
     ((list c) (list (list c)))
@@ -59,7 +63,7 @@
            (with acc = nil)
            (if (emptyp tmp)
                (push c tmp)
-               (if (funcall fn (car tmp) c)
+               (if (fusiblep (car tmp) c under)
                    (push c tmp)
                    (progn (push (nreverse tmp) acc)
                           (setf tmp (list c)))))
@@ -67,21 +71,25 @@
             (push (nreverse tmp) acc)
             (return (nreverse acc)))))))
 
-(defun type-disjointp (t1 t2)
-  (subtypep `(and ,t1 ,t2) 'nil))
+(defun type-disjointp (t1 t2 &optional (under t))
+  (subtypep `(and ,under ,t1 ,t2) nil))
+
+
+(defun type-equal (t1 t2 &optional (under t))
+  (type= `(and ,under ,t1) `(and ,under ,t2)))
 
 (defun gensym* (name)
   (lambda (x)
     (declare (ignore x))
     (gensym name)))
 
-(defun fusiblep (c1 c2)
+(defun fusiblep (c1 c2 &optional (under t))
   (ematch* (c1 c2)
     (((list* ($guard1 s1 _ test1 _) _)
       (list* ($guard1 s2 _ test2 _) _))
-     (let ((type1 (test-type (? s1 test1)))
-           (type2 (test-type (? s2 test2))))
-       (type= type1 type2)))))
+     (type-equal (test-type (? s1 test1))
+                 (test-type (? s2 test2))
+                 under))))
 
 (defun gen-union (&optional x y)
   (union x y :test #'equal))
@@ -123,14 +131,14 @@
 
 ;;; Interleaving
 
-(defun apply-interleaving (clauses)
+(defun apply-interleaving (clauses &optional (under t))
   ;; be more conservative than Emilie 2006:
   ;; apply only once by each call
   (ematch clauses
     ((list) nil)
     ((list _) clauses)
     ((list* c1 (and rest1 (list* c2 rest2)))
-     (if-let ((c12 (interleave c1 c2)))
+     (if-let ((c12 (interleave c1 c2 under)))
        (progn (format t "~&~<; ~@;interleaving ~_ ~W,~_ ~W~:>" (list c1 c2))
               (cons c12 rest2))
        (cons c1 (apply-interleaving rest1))))))
@@ -139,12 +147,14 @@
   (ematch* (c1 c2)
     (((list* ($guard1 s1 o1 test1 more1) body1)
       (list* ($guard1 s2 o2 test2 more2) body2))
-     (let ((type1 `(and ,under ,(test-type (? s1 test1))))
-           (type2 `(and ,under ,(test-type (? s2 test2)))))
-       (if (subtypep type1 nil)
-           c2
-           (if (and (type-disjointp type1 type2)
-                    (subtypep under `(or ,type1 ,type2))) ; exhaustive partition
+     (let ((type1 (test-type (? s1 test1)))
+           (type2 (test-type (? s2 test2))))
+       (cond
+         ((type-disjointp type1 under) c2)
+         ((type-disjointp type2 under) c1)
+         ((and (type-disjointp type1 type2 under)
+               (subtypep under `(or ,type1 ,type2)))
+          ;; exhaustive partition
                (with-gensyms (il)
                  `((guard1 ,il t)
                    (match2 ,il
@@ -157,7 +167,7 @@
 
 ;;; Swapping
 
-(defun apply-swapping (clauses)
+(defun apply-swapping (clauses &optional (under t))
   ;; runs swap sort
   (let* ((v (coerce clauses 'vector))
          (len (length v)))
@@ -165,7 +175,7 @@
       (while
           (iter (for i from 1 below len)
                 (for j = (1- i))
-                (when (swappable (aref v i) (aref v j))
+                (when (swappable (aref v i) (aref v j) under)
                   (format t "~&~<; ~@;swapping~_ ~W,~_ ~W~:>"
                           (list (aref v j) (aref v i)))
                   (rotatef (aref v i) (aref v j))
@@ -173,13 +183,13 @@
     (coerce v 'list)))
 
 
-(defun swappable (c1 c2)
+(defun swappable (c1 c2 &optional (under t))
   (ematch* (c1 c2)
     (((list* ($guard1 s1 _ test1 _) _)
       (list* ($guard1 s2 _ test2 _) _))
      (let ((type1 (test-type (? s1 test1)))
            (type2 (test-type (? s2 test2))))
-       (and (type-disjointp type1 type2)
+       (and (type-disjointp type1 type2 under)
             (< (sxhash type1) (sxhash type2)))))))
 
 

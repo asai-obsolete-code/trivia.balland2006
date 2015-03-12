@@ -10,6 +10,7 @@
         :trivia.emilie2006
         :alexandria
         :fiveam
+        :type-i
         :type-r))
 (in-package :trivia.emilie2006.test)
 
@@ -31,23 +32,20 @@
 (test fuse1
   ;; because the two clauses are merged
   (is-true
-   (print
-    (fuse
-     (e*
-      '(((cons
+   (fusiblep
+    (e '((cons
           (guard1 x (= 1 x))
-          (guard1 y (null y))) body1)
-        ((cons
+          (guard1 y (null y))) body1))
+    (e '((cons
           (guard1 x (stringp x))
-          (guard1 y (null y))) body2)))))))
+          (guard1 y (null y))) body2)))))
 
 (test interleave1
   (is-true
-   (print
     (interleave
      (e '((cons 1 2) body1))
      (e '((null) body2))
-     'list)))
+    'list))
 
   ;; ;; rational and float are the exhaustive partition of real
   ;; ;; IN MOST IMPLEMENTATIONS. see CLHS Issue REAL-NUMBER-TYPE:X3J13-MAR-89 Summary
@@ -104,29 +102,26 @@
 (test (or-pattern :fixture emilie2006)
   ;; test to see if or-pattern is grounded
   (finishes
-    (print
      (macroexpand
       `(match '(double-float 0.0d0 1.0d0)
          ((or (cons 1 b) (cons 0 a)) (vector a b))
-         ((string a) a))))))
+        ((string a) a)))))
 
 
 (test (fuse2 :fixture emilie2006)
   ;; test to see if or-pattern is grounded
   (finishes
-    (print
      (macroexpand
         `(match '(double-float 0.0d0 1.0d0)
            ((or (cons 1 b) (cons 0 a)) (vector a b))
-           ((string a) a))))))
+        ((string a) a)))))
 
 (test (run :fixture emilie2006)
   (finishes
-    (print
      (macroexpand
       `(match '(double-float 0.0d0 1.0d0)
          ((cons 0 b) b)
-         ((cons 1 b) b))))))
+        ((cons 1 b) b)))))
 
 (defvar *twice* nil)
 
@@ -143,12 +138,12 @@
       ((guard1 it (once-consp it) 2 b) b)))
 
 (test twice
-  (print (macroexpand form))
+  (pprint (macroexpand form))
   (let ((*twice* nil))
     (signals error (eval form))))
 
 (test (strict-once :fixture emilie2006)
-  (print (macroexpand form))
+  (pprint (macroexpand form))
   (let ((*twice* nil))
     (finishes (eval form))))
 
