@@ -5,11 +5,31 @@ This is an optimizer implementation based on (Emilie et.al. 2006).
 
 c.f.
 
-   Le Fessant, Fabrice, and Luc Maranget. Optimizing pattern matching.
-   ACM SIGPLAN Notices. Vol. 36. No. 10. ACM, 2001.
+#+BEGIN_QUOTE
+Le Fessant, Fabrice, and Luc Maranget. Optimizing pattern matching.
+ACM SIGPLAN Notices. Vol. 36. No. 10. ACM, 2001.
 
-   Emilie Balland, Pierre-Etienne Moreau. Optimizing pattern matching compilation by program
-   transformation. [Technical Report] 2006, pp.19. <inria-00001127v2>
+Emilie Balland, Pierre-Etienne Moreau. Optimizing pattern matching compilation by program
+transformation. [Technical Report] 2006, pp.19. <inria-00001127v2>
+#+END_QUOTE
+
+** Usage & Dependencies
+
+After loading Trivia, use =(ql:quickload :trivia.emilie2006.enabled)= to activate the optimizer.
+
+Also, it depends on the following libraries:
+
++ [[https://github.com/guicho271828/trivia][Trivia by Me]] :: NON-Optimized Pattern Matching Library
+
++ [[https://github.com/guicho271828/type-i][Type-i]] by Me :: Type inference utility for fundamentally 1-arg predicates
+
++ alexandria ::
+    Alexandria is a collection of portable public domain utilities.
+
++ iterate ::
+    Jonathan Amsterdam's iterator/gatherer/accumulator facility
+
+* Optimizer Details
 
 In (Emillie 2006), their optimization rule reduces the number of
 assignments (let) and tests (if).  However, since current state-of-the-art
@@ -151,44 +171,11 @@ Now in our implementation this is simplified as follows:
 
 : Innermost( repeat( Fusion | Swapping) ; repeat(Interleaving))
 
-** Usage
-
-After loading Trivia, use =(in-optimizer :emilie06)= to activate this optimizer.
-
-** Dependencies
-
-This library is at least tested on implementation listed below:
-
-+ SBCL 1.2.8 on X86-64 Linux  3.13.0-46-generic (author's environment)
-
-Also, it depends on the following libraries:
-
-+ optima by Tomohiro Matsuyama ::
-    Optimized Pattern Matching Library
-
-+ alexandria by  ::
-    Alexandria is a collection of portable public domain utilities.
-
-+ iterate by  ::
-    Jonathan Amsterdam's iterator/gatherer/accumulator facility
 
 
 
-** Installation
-
-
-** Author
-
-+ Masataro Asai (guicho2.71828@gmail.com)
-
-* Copyright
+* Author & Copyright
 
 Copyright (c) 2015 Masataro Asai (guicho2.71828@gmail.com)
 
-
-* License
-
-Licensed under the LLGPL License.
-
-
-
+Licensed under the LLGPL.
