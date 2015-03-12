@@ -35,6 +35,7 @@ install:
     fi     
   - git clone --depth=1 https://github.com/guicho271828/trivia.git ~/lisp/trivia
   - git clone --depth=1 https://github.com/guicho271828/type-i.git ~/lisp/type-i
+  - git clone --depth=1 https://github.com/guicho271828/type-i.git ~/lisp/type-r #  for testing
   - git clone --depth=1 https://github.com/guicho271828/lisp-namespace.git ~/lisp/lisp-namespace
 
 # this bit is just testing that travis correctly sets up ASDF to find
