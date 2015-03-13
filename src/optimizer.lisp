@@ -116,7 +116,8 @@
                  (generators (reduce #'gen-union (mapcar (curry #'mapcar #'car) more1)))
                  (tmps (mapcar (gensym* "TMP") generators))
                  (more2 (mapcar #'cons generators (mapcar #'pattern-expand-all tmps))))
-            (format t "~&~<; ~@;fusing~_ ~{~4t~A~^, ~_~}~:>" (list clauses))
+            (format t "~&~<; ~@;fusing~_ ~{~4t~A~^, ~_~}~:>"
+                    (list (mapcar #'first clauses)))
             `(((guard1 (,fusion :type ,(type c))
                        ,(subst fusion (sym c) (test c))
                        ,@(alist-plist more2))
@@ -142,7 +143,10 @@
     ((list _) clauses)
     ((list* c1 (and rest1 (list* c2 rest2)))
      (if-let ((c12 (interleave c1 c2 under)))
-       (progn (format t "~&~<; ~@;interleaving ~_ ~W,~_ ~W~:>" (list c1 c2))
+       (progn (format t "~&~<; ~@;interleaving ~_ ~a,~_ ~a~_ under ~a~:>"
+                      (list (first c1)
+                            (first c2)
+                            under))
               (cons c12 rest2))
        (cons c1 (apply-interleaving rest1 under))))))
 
@@ -178,8 +182,9 @@
           (iter (for i from 1 below len)
                 (for j = (1- i))
                 (when (swappable (aref v i) (aref v j) under)
-                  (format t "~&~<; ~@;swapping~_ ~W,~_ ~W~:>"
-                          (list (aref v j) (aref v i)))
+                  (format t "~&~<; ~@;swapping~_ ~a,~_ ~a~_ under ~a~:>"
+                          (list (first (aref v j))
+                                (first (aref v i)) under))
                   (rotatef (aref v i) (aref v j))
                   (leave t)))))
     (coerce v 'list)))
