@@ -1,9 +1,9 @@
 
-* Trivia.Emilie2006
+* Trivia.Balland2006
 
-[[https://travis-ci.org/guicho271828/trivia.emilie2006][https://travis-ci.org/guicho271828/trivia.emilie2006.svg?branch=master]]
+[[https://travis-ci.org/guicho271828/trivia.balland2006][https://travis-ci.org/guicho271828/trivia.balland2006.svg?branch=master]]
 
-This is an optimizer implementation based on (Emilie et.al. 2006).
+This is an optimizer implementation based on (Balland et.al. 2006).
 
 c.f.
 
@@ -17,7 +17,7 @@ transformation. [Technical Report] 2006, pp.19. <inria-00001127v2>
 
 ** Usage & Dependencies
 
-After loading Trivia, use =(ql:quickload :trivia.emilie2006.enabled)= to activate the optimizer.
+After loading Trivia, use =(ql:quickload :trivia.balland2006.enabled)= to activate the optimizer.
 
 Also, it depends on the following libraries:
 

@@ -1,10 +1,10 @@
 ;;; prelude
 
-(in-package :trivia.emilie2006)
+(in-package :trivia.balland2006)
 
-(defoptimizer :emilie2006 (clauses &key types &allow-other-keys)
+(defoptimizer :balland2006 (clauses &key types &allow-other-keys)
   (let ((*print-length* 3))
-    (emilie2006 clauses
+    (balland2006 clauses
                 (or types
                     (make-list (reduce #'max
                                        (mapcar
@@ -12,7 +12,7 @@
                                         clauses))
                                :initial-element t)))))
 
-(defun emilie2006 (clauses types)
+(defun balland2006 (clauses types)
   (let ((% clauses))
     (iter (for prev = %)
           (setf % (apply-or-grounding %))
@@ -148,7 +148,7 @@
 ;;; Interleaving
 
 (defun apply-interleaving (clauses types &aux (under (first types)))
-  ;; be more conservative than Emilie 2006:
+  ;; be more conservative than Balland 2006:
   ;; apply only once by each call
   (ematch clauses
     ((list) nil)

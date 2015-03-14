@@ -1,4 +1,4 @@
-(in-package :trivia.emilie2006)
+(in-package :trivia.balland2006)
 
-(in-optimizer :emilie2006)
+(in-optimizer :balland2006)
 
