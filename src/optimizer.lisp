@@ -117,8 +117,8 @@
              (pat*-tmps (mapcar (gensym* "PAT") (pat* c)))
              (pat*-pats (mapcar #'pattern-expand-all pat*-tmps))
              (pat** (mapcar (lambda (c) (subst fusion (sym c) (pat* c))) clauses)))
-        (format t "~&~<; ~@;fusing~_ ~{~4t~s~^, ~_~}~:>"
-                (list (mapcar (compose #'first #'first) clauses)))
+        (format t "~&~<; ~@;Fusing~_ ~{~4t~s~^, ~_~}~:>"
+                (list (mapcar (compose #'third #'first #'first) clauses)))
         ((lambda (result)
            #+nil
            result ;; this results in infinite recursion
@@ -155,9 +155,9 @@
     ((list _) clauses)
     ((list* c1 (and rest1 (list* c2 rest2)))
      (if-let ((c12 (interleave c1 c2 types)))
-       (progn (format t "~&~<; ~@;interleaving ~_ ~s,~_ ~s~_ under ~s~:>"
-                      (list (first (first c1))
-                            (first (first c2))
+       (progn (format t "~&~<; ~@;Interleaving ~_ ~s,~_ ~s~_ under ~s~:>"
+                      (list (third (first (first c1)))
+                            (third (first (first c2)))
                             under))
               (cons c12 rest2))
        (cons c1 (apply-interleaving rest1 types))))))
@@ -195,9 +195,9 @@
           (iter (for i from 1 below len)
                 (for j = (1- i))
                 (when (swappable (aref v i) (aref v j) under)
-                  (format t "~&~<; ~@;swapping~_ ~s,~_ ~s~_ under ~s~:>"
-                          (list (first (first (aref v j)))
-                                (first (first (aref v i))) under))
+                  (format t "~&~<; ~@;Swapping~_ ~s,~_ ~s~_ under ~s~:>"
+                          (list (third (first (first (aref v j))))
+                                (third (first (first (aref v i)))) under))
                   (rotatef (aref v i) (aref v j))
                   (leave t)))))
     (coerce v 'list)))
