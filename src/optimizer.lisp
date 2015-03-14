@@ -3,7 +3,7 @@
 (in-package :trivia.emilie2006)
 
 (defoptimizer :emilie2006 (clauses &key types &allow-other-keys)
-  (let ((*print-length* nil))
+  (let ((*print-length* 3))
     (emilie2006 clauses
                 (or types
                     (make-list (reduce #'max
@@ -35,7 +35,7 @@
     ((list* (list* (list* 'guard1 _) _) _)
      (list clause))
     ((list* (list* (list* 'or1 subpatterns) rest) body)
-     (format t "~&~<; ~@;Grounding~_ ~A~:>" (list clause))
+     (format t "~&~<; ~@;Grounding~_ ~s~:>" (list clause))
      ;; overrides the default or1 compilation
      (mappend (lambda (x)
                 ;; this inflates the code size, but let's ignore it for the sake of speed!
@@ -117,7 +117,7 @@
              (pat*-tmps (mapcar (gensym* "PAT") (pat* c)))
              (pat*-pats (mapcar #'pattern-expand-all pat*-tmps))
              (pat** (mapcar (lambda (c) (subst fusion (sym c) (pat* c))) clauses)))
-        (format t "~&~<; ~@;fusing~_ ~{~4t~A~^, ~_~}~:>"
+        (format t "~&~<; ~@;fusing~_ ~{~4t~s~^, ~_~}~:>"
                 (list (mapcar (compose #'first #'first) clauses)))
         ;; (if (every (curry #'eq t) (mapcar #'test clauses))
         ;;     ;; then level1 can handle it, and further fusion results in infinite recursion
@@ -153,9 +153,9 @@
     ((list _) clauses)
     ((list* c1 (and rest1 (list* c2 rest2)))
      (if-let ((c12 (interleave c1 c2 types)))
-       (progn (format t "~&~<; ~@;interleaving ~_ ~a,~_ ~a~_ under ~a~:>"
-                      (list (first c1)
-                            (first c2)
+       (progn (format t "~&~<; ~@;interleaving ~_ ~s,~_ ~s~_ under ~s~:>"
+                      (list (first (first c1))
+                            (first (first c2))
                             under))
               (cons c12 rest2))
        (cons c1 (apply-interleaving rest1 types))))))
@@ -193,9 +193,9 @@
           (iter (for i from 1 below len)
                 (for j = (1- i))
                 (when (swappable (aref v i) (aref v j) under)
-                  (format t "~&~<; ~@;swapping~_ ~a,~_ ~a~_ under ~a~:>"
-                          (list (first (aref v j))
-                                (first (aref v i)) under))
+                  (format t "~&~<; ~@;swapping~_ ~s,~_ ~s~_ under ~s~:>"
+                          (list (first (first (aref v j)))
+                                (first (first (aref v i))) under))
                   (rotatef (aref v i) (aref v j))
                   (leave t)))))
     (coerce v 'list)))
