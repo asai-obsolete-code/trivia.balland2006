@@ -205,12 +205,18 @@
 
 (defun swappable (c1 c2 &optional (under t))
   (ematch* (c1 c2)
-    (((list* (list* ($guard1 s1 _ test1 _) _) _)
-      (list* (list* ($guard1 s2 _ test2 _) _) _))
+    (((list* patterns1 _)
+      (list* patterns2 _))
+     (swappable-rec patterns1 patterns2 under))))
+
+(defun swappable-rec (patterns1 patterns2 under)
+  (match* (patterns1 patterns2)
+    (((list* ($guard1 s1 _ test1 _) rest1)
+      (list* ($guard1 s2 _ test2 _) rest2))
      (multiple-value-bind (type1 ok1) (test-type (? s1 test1))
        (multiple-value-bind (type2 ok2) (test-type (? s2 test2))
-         (and ok1 ok2
-              (type-disjointp type1 type2 under)
-              (< (sxhash type1) (sxhash type2))))))))
+         (and (< (sxhash type1) (sxhash type2))
+              (or (and ok1 ok2 (type-disjointp type1 type2 under))
+                  (swappable-rec rest1 rest2 under))))))))
 
 
