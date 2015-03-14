@@ -2,58 +2,57 @@
 
 (in-package :trivia.emilie2006)
 
-(defoptimizer :emilie2006 (clauses &key (type t) &allow-other-keys)
-  (let ((*print-length* 3))
-    (emilie2006 clauses type)))
+(defoptimizer :emilie2006 (clauses &key types &allow-other-keys)
+  (let ((*print-length* nil))
+    (emilie2006 clauses
+                (or types
+                    (make-list (reduce #'max
+                                       (mapcar
+                                        (compose #'length #'first)
+                                        clauses))
+                               :initial-element t)))))
 
-(defun emilie2006 (clauses &optional (under t))
+(defun emilie2006 (clauses types)
   (let ((% clauses))
     (iter (for prev = %)
-          (setf % (apply-or-grounding % under))
-          (setf % (apply-swapping     % under))
-          (setf % (apply-fusion       % under))
-          (setf % (apply-interleaving % under))
+          (setf % (apply-or-grounding %))
+          (setf % (apply-swapping     % types))
+          (setf % (apply-fusion       % types))
+          (setf % (apply-interleaving % types))
           (until (equal % prev)))
     %))
 
 ;;; or lifting
 
-(defun apply-or-grounding (clauses &optional (under t))
-  (mapcar (rcurry #'ground-or under) clauses))
+(defun apply-or-grounding (clauses)
+  (let ((new (mappend #'ground-or clauses)))
+    (if (not (equal clauses new))
+        (apply-or-grounding new)
+        clauses)))
 
-(defun ground-or (clause &optional (under t))
-  (declare (ignorable under))
+(defun ground-or (clause)
   (ematch clause
-    ((list* (list* 'guard1 _) _) clause)
-    ((list* (and pattern (list* 'or1 subpatterns)) body)
+    ((list* (list* (list* 'guard1 _) _) _)
+     (list clause))
+    ((list* (list* (list* 'or1 subpatterns) rest) body)
+     (format t "~&~<; ~@;Grounding~_ ~A~:>" (list clause))
      ;; overrides the default or1 compilation
-     (let* ((vars (variables pattern))
-            (syms (mapcar #'first vars)))
-       (with-gensyms (it fn)
-         `((guard1 ,it t)
-           (flet ((,fn ,syms
-                    (declare
-                     ,@(mapcar (lambda-ematch
-                                 ((list* var options)
-                                  `(type ,(getf options :type) ,var)))
-                               vars))
-                    ,@body))
-             (declare (dynamic-extent (function ,fn)))
-             (match2+ ,it ,under
-               ,@(mapcar (lambda (pattern)
-                                `(,pattern (,fn ,@syms)))
-                              subpatterns)
-                      ;; 
-                      ;;     +-- this (next) makes the failure propagate upwards correctly
-                      ;;    / 
-               (_ (next))))))))))
+     (mapcar (lambda (x)
+               ;; this inflates the code size, but let's ignore it for the sake of speed!
+               (if rest
+                   (mapcar (lambda-ematch
+                             ((list* rest body)
+                              (list* (list* x rest) body)))
+                           (ground-or (list* rest body)))
+                   (list* (list x) body)))
+             subpatterns))))
 
 ;;; Fusion
 
-(defun apply-fusion (clauses &optional (under t))
-  (mappend #'fuse (divide-clauses clauses under)))
+(defun apply-fusion (clauses types)
+  (mappend (rcurry #'fuse types) (divide-clauses clauses types)))
 
-(defun divide-clauses (clauses &optional (under t))
+(defun divide-clauses (clauses types &aux (under (first types)))
   (ematch clauses
     ((list) nil)
     ((list c) (list (list c)))
@@ -88,92 +87,104 @@
 
 (defun fusiblep (c1 c2 &optional (under t))
   (ematch* (c1 c2)
-    (((list* ($guard1 s1 _ test1 _) _)
-      (list* ($guard1 s2 _ test2 _) _))
-     (type-equal (test-type (? s1 test1))
-                 (test-type (? s2 test2))
-                 under))))
+    (((list* (list* ($guard1 s1 _ test1 _) _) _)
+      (list* (list* ($guard1 s2 _ test2 _) _) _))
+     (multiple-value-bind (type1 ok1) (test-type (? s1 test1))
+       (multiple-value-bind (type2 ok2) (test-type (? s2 test2))
+         (and ok1 ok2
+              (type-equal type1 type2 under)))))))
 
 (defun gen-union (&optional x y)
   (union x y :test #'equal))
 
-(defun fuse (clauses)
+(defun fuse (clauses types)
   (unless (cdr clauses)
     (return-from fuse clauses))
   ;; assumes all clauses are fusible
   (with-gensyms (fusion)
-    (labels ((sym  (c) (ematch c ((list* ($guard1 x _ _ _) _) x)))
-             (type (c) (ematch c ((list* ($guard1 _ (property :type x) _ _) _) x)))
-             (test (c) (ematch c ((list* ($guard1 _ _ x _) _) x)))
-             (more (c) (ematch c ((list* ($guard1 _ _ _ x) _) x)))
-             (body (c) (ematch c ((list* ($guard1 _ _ _ _) x) x)))
+    (labels ((sym  (c) (ematch c ((list* (list* ($guard1 x _ _ _) _) _) x)))
+             (type (c) (ematch c ((list* (list* ($guard1 _ (property :type x) _ _) _) _) x)))
+             (test (c) (ematch c ((list* (list* ($guard1 _ _ x _) _) _) x)))
+             (more (c) (ematch c ((list* (list* ($guard1 _ _ _ x) _) _) x)))
+             (pat* (c) (ematch c ((list* (list* ($guard1 _ _ _ _) x) _) x)))
+             (body (c) (ematch c ((list* (list* ($guard1 _ _ _ _) _) x) x)))
              (generator-alist (x) (plist-alist (subst fusion (sym x) (more x)))))
-      (if (every (curry #'eq t) (mapcar #'test clauses))
-          ;; then level1 can handle it, and further fusion results in infinite recursion
-          clauses
-          (let* ((c (first clauses))
-                 (more1 (mapcar #'generator-alist clauses))
-                 (generators (reduce #'gen-union (mapcar (curry #'mapcar #'car) more1)))
-                 (tmps (mapcar (gensym* "TMP") generators))
-                 (more2 (mapcar #'cons generators (mapcar #'pattern-expand-all tmps))))
-            (format t "~&~<; ~@;fusing~_ ~{~4t~A~^, ~_~}~:>"
-                    (list (mapcar #'first clauses)))
-            `(((guard1 (,fusion :type ,(type c))
-                       ,(subst fusion (sym c) (test c))
-                       ,@(alist-plist more2))
-               (match2* ,tmps
-                 ,@(mapcar (lambda (c m)
-                             `(,(mapcar (lambda (gen)
-                                          (or (cdr (assoc gen m :test #'equal)) '_))
-                                        generators)
-                                ,@(body c)))
-                           clauses more1)
+      (let* ((c (first clauses))
+             (more1 (mapcar #'generator-alist clauses))
+             (generators (reduce #'gen-union (mapcar (curry #'mapcar #'car) more1)))
+             (gen-tmps (mapcar (gensym* "GEN") generators))
+             (more2 (mapcar #'cons generators (mapcar #'pattern-expand-all gen-tmps)))
+             (pat*-tmps (mapcar (gensym* "PAT") (pat* c)))
+             (pat*-pats (mapcar #'pattern-expand-all pat*-tmps))
+             (pat** (mapcar (lambda (c) (subst fusion (sym c) (pat* c))) clauses)))
+        (format t "~&~<; ~@;fusing~_ ~{~4t~A~^, ~_~}~:>"
+                (list (mapcar (compose #'first #'first) clauses)))
+        ;; (if (every (curry #'eq t) (mapcar #'test clauses))
+        ;;     ;; then level1 can handle it, and further fusion results in infinite recursion
+        ;;     clauses
+
+            `((((guard1 (,fusion :type ,(type c))
+                        ,(subst fusion (sym c) (test c))
+                        ,@(mappend (lambda (c) (list fusion `(guard1 (,(sym c) :type ,(type c)) t)))
+                                   (remove-duplicates clauses :key #'sym))
+                        ,@(alist-plist more2))
+                ,@pat*-pats)
+               (match2*+ (,@gen-tmps ,@pat*-tmps)
+                   (,@(mapcar (constantly t) gen-tmps) ,@(rest types))
+                 ,@(mapcar (lambda (c m pat*)
+                             `((,@(mapcar (lambda (gen)
+                                            (or (cdr (assoc gen m :test #'equal)) '_))
+                                          generators)
+                                  ,@pat*)
+                               ,@(body c)))
+                           clauses more1 pat**)
                  ;; 
                  ;;     +-- this (next) makes the failure propagate upwards correctly
                  ;;    / 
-                 (_ (next))))))))))
+                 (_ (next)))))))));)
 
 ;;; Interleaving
 
-(defun apply-interleaving (clauses &optional (under t))
+(defun apply-interleaving (clauses types &aux (under (first types)))
   ;; be more conservative than Emilie 2006:
   ;; apply only once by each call
   (ematch clauses
     ((list) nil)
     ((list _) clauses)
     ((list* c1 (and rest1 (list* c2 rest2)))
-     (if-let ((c12 (interleave c1 c2 under)))
+     (if-let ((c12 (interleave c1 c2 types)))
        (progn (format t "~&~<; ~@;interleaving ~_ ~a,~_ ~a~_ under ~a~:>"
                       (list (first c1)
                             (first c2)
                             under))
               (cons c12 rest2))
-       (cons c1 (apply-interleaving rest1 under))))))
+       (cons c1 (apply-interleaving rest1 types))))))
 
-(defun interleave (c1 c2 &optional (under t))
+(defun interleave (c1 c2 types &aux (under (first types)))
   (ematch* (c1 c2)
-    (((list* ($guard1 s1 o1 test1 more1) body1)
-      (list* ($guard1 s2 o2 test2 more2) body2))
-     (let ((type1 (test-type (? s1 test1)))
-           (type2 (test-type (? s2 test2))))
-       (cond
-         ((type-disjointp type1 under) c2)
-         ((type-disjointp type2 under) c1)
-         ((type-exhaustivep type1 type2 under)
-          ;; exhaustive partition
-               (with-gensyms (il)
-                 `((guard1 (,il :type ,under) t)
-                   (match2+ ,il ,under
-                     ((guard1 ,(list* s1 o1) ,test1 ,@more1) ,@body1)
-                     ((guard1 ,(list* s2 o2) t ,@more2) ,@body2)
-                     ;; 
-                     ;;     +-- this (next) makes the failure propagate upwards correctly
-                     ;;    / 
-                     (_ (next)))))))))))
+    (((list* (list* ($guard1 s1 o1 test1 more1) rest1) body1)
+      (list* (list* ($guard1 s2 o2 test2 more2) rest2) body2))
+     (multiple-value-bind (type1 ok1) (test-type (? s1 test1))
+       (multiple-value-bind (type2 ok2) (test-type (? s2 test2))
+         (when (and ok1 ok2)
+           (cond
+             ((type-disjointp type1 under) c2)
+             ((type-disjointp type2 under) c1)
+             ((type-exhaustivep type1 type2 under)
+              ;; exhaustive partition
+              (with-gensyms (il)
+                `((guard1 (,il :type ,under) t)
+                  (match2*+ ,il ,types
+                    (((guard1 ,(list* s1 o1) ,test1 ,@more1) ,rest1) ,@body1)
+                    (((guard1 ,(list* s2 o2) t      ,@more2) ,rest2) ,@body2)
+                    ;; 
+                    ;;     +-- this (next) makes the failure propagate upwards correctly
+                    ;;    / 
+                    (_ (next)))))))))))))
 
 ;;; Swapping
 
-(defun apply-swapping (clauses &optional (under t))
+(defun apply-swapping (clauses types &aux (under (first types)))
   ;; runs swap sort
   (let* ((v (coerce clauses 'vector))
          (len (length v)))
@@ -192,11 +203,12 @@
 
 (defun swappable (c1 c2 &optional (under t))
   (ematch* (c1 c2)
-    (((list* ($guard1 s1 _ test1 _) _)
-      (list* ($guard1 s2 _ test2 _) _))
-     (let ((type1 (test-type (? s1 test1)))
-           (type2 (test-type (? s2 test2))))
-       (and (type-disjointp type1 type2 under)
-            (< (sxhash type1) (sxhash type2)))))))
+    (((list* (list* ($guard1 s1 _ test1 _) _) _)
+      (list* (list* ($guard1 s2 _ test2 _) _) _))
+     (multiple-value-bind (type1 ok1) (test-type (? s1 test1))
+       (multiple-value-bind (type2 ok2) (test-type (? s2 test2))
+         (and ok1 ok2
+              (type-disjointp type1 type2 under)
+              (< (sxhash type1) (sxhash type2))))))))
 
 
