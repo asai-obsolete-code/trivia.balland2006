@@ -17,8 +17,8 @@
 (defun e (clause)
   ;; expand
   (match clause
-    ((list* pattern body)
-     (list* (pattern-expand-all pattern) body))))
+    ((list* patterns body)
+     (list* (mapcar #'pattern-expand-all patterns) body))))
 
 (defun e* (clauses)
   (mapcar #'e clauses))
@@ -33,19 +33,19 @@
   ;; because the two clauses are merged
   (is-true
    (fusiblep
-    (e '((cons
+    (e '(((cons
           (guard1 x (= 1 x))
-          (guard1 y (null y))) body1))
-    (e '((cons
+           (guard1 y (null y)))) body1))
+    (e '(((cons
           (guard1 x (stringp x))
-          (guard1 y (null y))) body2)))))
+           (guard1 y (null y)))) body2)))))
 
 (test interleave1
   (is-true
     (interleave
-     (e '((cons 1 2) body1))
-     (e '((null) body2))
-    'list))
+    (e '(((cons 1 2)) body1))
+    (e '(((null)) body2))
+    '(list)))
 
   ;; ;; rational and float are the exhaustive partition of real
   ;; ;; IN MOST IMPLEMENTATIONS. see CLHS Issue REAL-NUMBER-TYPE:X3J13-MAR-89 Summary
@@ -65,35 +65,35 @@
   ;; these are not disjoint
   (is-false
    (interleave
-    (e '((type (or simple-vector simple-string)) body1))
-    (e '((type (or simple-vector simple-bit-vector)) body2))
-    'simple-array))
+    (e '(((type (or simple-vector simple-string))) body1))
+    (e '(((type (or simple-vector simple-bit-vector))) body2))
+    '(simple-array)))
   
   ;; these are not exhaustive
   (is-false
    (interleave
-    (e '((type simple-string) body1))
-    (e '((type simple-bit-vector) body2))
-    'simple-array)))
+    (e '(((type simple-string)) body1))
+    (e '(((type simple-bit-vector)) body2))
+    '(simple-array))))
 
 (test swap1
   (is-true
    (xor
     (swappable
-     (e '((type fixnum) body1))
-     (e '((type float) body2)))
+     (e '(((type fixnum)) body1))
+     (e '(((type float)) body2)))
     (swappable
-     (e '((type float) body2))
-     (e '((type fixnum) body1)))))
+     (e '(((type float)) body2))
+     (e '(((type fixnum)) body1)))))
   
   (is-false
    (swappable
-    (e '((type (or fixnum string)) body1))
-    (e '((type (or float string)) body2))))
+    (e '(((type (or fixnum string))) body1))
+    (e '(((type (or float string))) body2))))
   (is-false
    (swappable
-    (e '((type (or float string)) body2))
-    (e '((type (or fixnum string)) body1)))))
+    (e '(((type (or float string))) body2))
+    (e '(((type (or fixnum string))) body1)))))
 
 (def-fixture emilie2006 ()
   (let ((*optimizer* :emilie2006))
