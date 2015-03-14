@@ -141,9 +141,9 @@
                             ,@(body c)))
                         clauses more1 pat**)
               ;; 
-              ;;     +-- this (next) makes the failure propagate upwards correctly
+              ;;     +-- this (skip) makes the failure propagate upwards correctly
               ;;    / 
-              (_ (next))))))))))
+              (_ (skip))))))))))
 
 ;;; Interleaving
 
@@ -180,9 +180,9 @@
                     (((guard1 ,(list* s1 o1) ,test1 ,@more1) ,rest1) ,@body1)
                     (((guard1 ,(list* s2 o2) t      ,@more2) ,rest2) ,@body2)
                     ;; 
-                    ;;     +-- this (next) makes the failure propagate upwards correctly
+                    ;;     +-- this (skip) makes the failure propagate upwards correctly
                     ;;    / 
-                    (_ (next)))))))))))))
+                    (_ (skip)))))))))))))
 
 ;;; Swapping
 
