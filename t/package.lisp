@@ -1,18 +1,18 @@
 #|
-  This file is a part of trivia.emilie2006 project.
+  This file is a part of trivia.balland2006 project.
   Copyright (c) 2015 Masataro Asai (guicho2.71828@gmail.com)
 |#
 
 (in-package :cl-user)
-(defpackage :trivia.emilie2006.test
+(defpackage :trivia.balland2006.test
   (:use :cl
         :trivia
-        :trivia.emilie2006
+        :trivia.balland2006
         :alexandria
         :fiveam
         :type-i
         :type-r))
-(in-package :trivia.emilie2006.test)
+(in-package :trivia.balland2006.test)
 
 (defun e (clause)
   ;; expand
@@ -23,8 +23,8 @@
 (defun e* (clauses)
   (mapcar #'e clauses))
 
-(def-suite :trivia.emilie2006)
-(in-suite :trivia.emilie2006)
+(def-suite :trivia.balland2006)
+(in-suite :trivia.balland2006)
 
 ;; run test with (run! test-name) 
 ;;   test as you like ...
@@ -95,11 +95,11 @@
     (e '(((type (or float string))) body2))
     (e '(((type (or fixnum string))) body1)))))
 
-(def-fixture emilie2006 ()
-  (let ((*optimizer* :emilie2006))
+(def-fixture balland2006 ()
+  (let ((*optimizer* :balland2006))
     (&body)))
 
-(test (or-pattern :fixture emilie2006)
+(test (or-pattern :fixture balland2006)
   ;; test to see if or-pattern is grounded
   (finishes
      (macroexpand
@@ -108,7 +108,7 @@
         ((string a) a)))))
 
 
-(test (fuse2 :fixture emilie2006)
+(test (fuse2 :fixture balland2006)
   ;; test to see if or-pattern is grounded
   (finishes
      (macroexpand
@@ -116,7 +116,7 @@
            ((or (cons 1 b) (cons 0 a)) (vector a b))
         ((string a) a)))))
 
-(test (run :fixture emilie2006)
+(test (run :fixture balland2006)
   (finishes
      (macroexpand
       `(match '(double-float 0.0d0 1.0d0)
@@ -142,7 +142,7 @@
   (let ((*twice* nil))
     (signals error (eval form))))
 
-(test (strict-once :fixture emilie2006)
+(test (strict-once :fixture balland2006)
   (pprint (macroexpand form))
   (let ((*twice* nil))
     (finishes (eval form))))
@@ -166,12 +166,12 @@
      (is (= 1.0d0 high))))
 
   (finishes
-    (let ((*optimizer* :emilie2006))
+    (let ((*optimizer* :balland2006))
       (macroexpand
        `(match '(double-float 0.0d0 1.0d0)
           ((general-real-type low high) (list low high))))))
   
-  (in-optimizer :emilie2006)
+  (in-optimizer :balland2006)
   (unwind-protect
       (eval '(match '(double-float 0.0d0 1.0d0)
               ((general-real-type low high)
@@ -181,13 +181,13 @@
 
 #+nil
 (print
- (let ((*optimizer* :emilie2006))
+ (let ((*optimizer* :balland2006))
    (macroexpand
     `(match '(double-float 0.0d0 1.0d0)
        ((general-real-type low high) (list low high))))))
 
 (eval-when (:load-toplevel :execute)
-  (run! :trivia.emilie2006))
+  (run! :trivia.balland2006))
 
 
 
