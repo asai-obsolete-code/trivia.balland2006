@@ -119,29 +119,31 @@
              (pat** (mapcar (lambda (c) (subst fusion (sym c) (pat* c))) clauses)))
         (format t "~&~<; ~@;fusing~_ ~{~4t~s~^, ~_~}~:>"
                 (list (mapcar (compose #'first #'first) clauses)))
-        ;; (if (every (curry #'eq t) (mapcar #'test clauses))
-        ;;     ;; then level1 can handle it, and further fusion results in infinite recursion
-        ;;     clauses
-
-            `((((guard1 (,fusion :type ,(type c))
-                        ,(subst fusion (sym c) (test c))
-                        ,@(mappend (lambda (c) (list fusion `(guard1 (,(sym c) :type ,(type c)) t)))
-                                   (remove-duplicates clauses :key #'sym))
-                        ,@(alist-plist more2))
-                ,@pat*-pats)
-               (match2*+ (,@gen-tmps ,@pat*-tmps)
-                   (,@(mapcar (constantly t) gen-tmps) ,@(rest types))
-                 ,@(mapcar (lambda (c m pat*)
-                             `((,@(mapcar (lambda (gen)
-                                            (or (cdr (assoc gen m :test #'equal)) '_))
-                                          generators)
-                                  ,@pat*)
-                               ,@(body c)))
-                           clauses more1 pat**)
-                 ;; 
-                 ;;     +-- this (next) makes the failure propagate upwards correctly
-                 ;;    / 
-                 (_ (next)))))))));)
+        ((lambda (result)
+           #+nil
+           result ;; this results in infinite recursion
+           (if (every (curry #'eq t) (mapcar #'test clauses))
+               ;; then level1 can handle it, and further fusion results in infinite recursion
+               clauses result))
+         `((((guard1 (,fusion :type ,(type c))
+                     ,(subst fusion (sym c) (test c))
+                     ,@(mappend (lambda (c) (list fusion `(guard1 (,(sym c) :type ,(type c)) t)))
+                                (remove-duplicates clauses :key #'sym))
+                     ,@(alist-plist more2))
+             ,@pat*-pats)
+            (match2*+ (,@gen-tmps ,@pat*-tmps)
+                (,@(mapcar (constantly t) gen-tmps) ,@(rest types))
+              ,@(mapcar (lambda (c m pat*)
+                          `((,@(mapcar (lambda (gen)
+                                         (or (cdr (assoc gen m :test #'equal)) '_))
+                                       generators)
+                               ,@pat*)
+                            ,@(body c)))
+                        clauses more1 pat**)
+              ;; 
+              ;;     +-- this (next) makes the failure propagate upwards correctly
+              ;;    / 
+              (_ (next))))))))))
 
 ;;; Interleaving
 
