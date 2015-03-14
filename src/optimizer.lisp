@@ -37,15 +37,15 @@
     ((list* (list* (list* 'or1 subpatterns) rest) body)
      (format t "~&~<; ~@;Grounding~_ ~A~:>" (list clause))
      ;; overrides the default or1 compilation
-     (mapcar (lambda (x)
-               ;; this inflates the code size, but let's ignore it for the sake of speed!
-               (if rest
-                   (mapcar (lambda-ematch
-                             ((list* rest body)
-                              (list* (list* x rest) body)))
-                           (ground-or (list* rest body)))
-                   (list* (list x) body)))
-             subpatterns))))
+     (mappend (lambda (x)
+                ;; this inflates the code size, but let's ignore it for the sake of speed!
+                (if rest
+                    (mapcar (lambda-ematch
+                              ((list* rest body)
+                               (list* (list* x rest) body)))
+                            (ground-or (list* rest body)))
+                    (list (list* (list x) body))))
+              subpatterns))))
 
 ;;; Fusion
 
