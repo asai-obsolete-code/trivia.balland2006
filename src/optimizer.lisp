@@ -5,12 +5,12 @@
 (defoptimizer :balland2006 (clauses &key types &allow-other-keys)
   (let ((*print-length* 3))
     (balland2006 clauses
-                (or types
-                    (make-list (reduce #'max
-                                       (mapcar
-                                        (compose #'length #'first)
-                                        clauses))
-                               :initial-element t)))))
+                 (or types
+                     (make-list (reduce #'max
+                                        (mapcar
+                                         (compose #'length #'first)
+                                         clauses))
+                                :initial-element t)))))
 
 (defun balland2006 (clauses types)
   (let ((% clauses))
