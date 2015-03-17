@@ -41,9 +41,10 @@
 ;; the variables in (list a b c) appears in (eq a) and (eq b).
 ;; Note that this does not require any type information.
 
-(defun pattern-swappable (p1 p2)
-  (notany (lambda (symopt) (find-tree (car symopt) p2))
-          (variables p1)))
+(defun pattern-dependent (p1 p2)
+  "return true if p2 depends on p1"
+  (some (lambda (symopt) (find-tree (car symopt) p2))
+        (variables p1)))
 
 (defun find-tree (obj tree &key (test #'eql))
   (labels ((rec (tree)
@@ -57,4 +58,13 @@
                 (or (funcall test obj thing)
                     (rec rest))))))
     (rec tree)))
+
+(defun pattern-dependencies (patterns)
+  (let ((pv (coerce patterns 'vector)))
+    (iter outer
+          (for p1 in-vector pv with-index i)
+          (iter (for p2 in-vector pv with-index j from (1+ i))
+                (when (pattern-dependent p1 p2)
+                  (in outer (collect (list i j))))))))
+
 
