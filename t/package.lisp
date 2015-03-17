@@ -186,6 +186,21 @@
     `(match '(double-float 0.0d0 1.0d0)
        ((general-real-type low high) (list low high))))))
 
+
+
+
+(test column-swapping
+  (is-false
+   (pattern-swappable
+    (pattern-expand-all '(list a b c))
+    (pattern-expand-all '(eq a))))
+  (is-true
+   (pattern-swappable
+    (pattern-expand-all '(list a b c))
+    (pattern-expand-all '(eq d)))))
+
+
+
 (eval-when (:load-toplevel :execute)
   (run! :trivia.balland2006))
 

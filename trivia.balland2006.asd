@@ -23,7 +23,8 @@
   :depends-on (:trivia :type-i :iterate :alexandria)
   :pathname "src/"
   :components ((:file "package")
-               (:file "optimizer"))
+               (:file "optimizer")
+               (:file "column-swapping"))
   :serial t
   :description "Optimizer for Trivia based on (Balland 2006)"
   :in-order-to ((test-op (load-op trivia.balland2006.test))))
