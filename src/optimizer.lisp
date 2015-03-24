@@ -74,6 +74,7 @@
   (subtypep `(and ,under ,t1 ,t2) nil))
 
 (defun type-exhaustivep (t1 t2 &optional (under t))
+  "Returns true for types under, t1, t2, if under = t1 + t2 and nothing more"
   (and (type-disjointp t1 t2 under)
        (subtypep under `(or ,t1 ,t2))))
 
@@ -170,8 +171,8 @@
        (multiple-value-bind (type2 ok2) (test-type (? s2 test2))
          (when (and ok1 ok2)
            (cond
-             ((type-disjointp type1 under) c2)
-             ((type-disjointp type2 under) c1)
+             ((type-disjointp type1 under) c2) ; no possibility
+             ((type-disjointp type2 under) c1) ; no possibility
              ((type-exhaustivep type1 type2 under)
               ;; exhaustive partition
               (with-gensyms (il)
