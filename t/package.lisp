@@ -191,11 +191,11 @@
 
 (test column-swapping
   (is-true
-   (pattern-swappable
+   (pattern-dependent
     (pattern-expand-all '(list a b c))
     (pattern-expand-all '(eq a))))
   (is-false
-   (pattern-swappable
+   (pattern-dependent
     (pattern-expand-all '(list a b c))
     (pattern-expand-all '(eq d)))))
 
