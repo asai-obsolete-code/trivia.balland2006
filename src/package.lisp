@@ -13,7 +13,9 @@
    #:apply-interleaving
    #:interleave
    #:apply-swapping
-   #:swappable))
+   #:swappable
+   #:pattern-dependent
+   #:pattern-dependencies))
 (in-package :trivia.balland2006)
 
 ;; blah blah blah.

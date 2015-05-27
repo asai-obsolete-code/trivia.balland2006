@@ -186,6 +186,29 @@
     `(match '(double-float 0.0d0 1.0d0)
        ((general-real-type low high) (list low high))))))
 
+
+
+
+(test column-swapping
+  (is-true
+   (pattern-dependent
+    (pattern-expand-all '(list a b c))
+    (pattern-expand-all '(eq a))))
+  (is-false
+   (pattern-dependent
+    (pattern-expand-all '(list a b c))
+    (pattern-expand-all '(eq d)))))
+
+
+(test pattern-dependencies
+  (is (equal
+       '((0 1) (0 2) (1 2))
+       (pattern-dependencies
+        (mapcar #'pattern-expand-all
+                '((list a b c) (list d (eq a)) (list (eq b) (eq d))))))))
+
+
+
 (eval-when (:load-toplevel :execute)
   (run! :trivia.balland2006))
 
