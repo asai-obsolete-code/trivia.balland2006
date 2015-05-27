@@ -24,5 +24,5 @@
   :pathname "src/"
   :components ((:file "enable"))
   :serial t
-  :description "Optimizer for Trivia based on (Balland 2006)"
+  :description "System that loads and enables trivia.balland2006"
   :in-order-to ((test-op (load-op trivia.balland2006.enabled.test))))
