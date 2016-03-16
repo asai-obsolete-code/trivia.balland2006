@@ -5,7 +5,7 @@
 
 (in-package :cl-user)
 (defpackage trivia.balland2006
-  (:use :cl :trivia :alexandria :type-i :iterate :trivia.skip)
+  (:use :cl :trivia :trivia.level1 :alexandria :type-i :iterate :trivia.skip)
   (:export
    #:apply-fusion
    #:fusiblep
