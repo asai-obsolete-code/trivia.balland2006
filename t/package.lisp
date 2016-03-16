@@ -209,9 +209,6 @@
 
 
 
-(eval-when (:load-toplevel :execute)
-  (run! :trivia.balland2006))
-
 
 
 

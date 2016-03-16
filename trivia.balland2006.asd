@@ -27,4 +27,4 @@
                (:file "column-swapping"))
   :serial t
   :description "Optimizer for Trivia based on (Balland 2006)"
-  :in-order-to ((test-op (load-op trivia.balland2006.test))))
+  :in-order-to ((test-op (test-op trivia.balland2006.test))))
