@@ -11,7 +11,6 @@
       (describe c)
       (uiop:quit 2))))
 
-(uiop:quit (if (every #'fiveam::TEST-PASSED-P
-                      (append (test :trivia.balland2006)
-                              (test :trivia.balland2006.enabled)))
+(uiop:quit (if (and (test :trivia.balland2006)
+                    (test :trivia.balland2006.enabled))
                0 1))
