@@ -23,6 +23,7 @@ env:
 
 matrix:
   allow_failures:
+    - env: LISP=cmucl
     - env: LISP=clisp
     - env: LISP=alisp
     - env: LISP=abcl
