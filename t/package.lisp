@@ -10,8 +10,7 @@
         :trivia.balland2006
         :alexandria
         :fiveam
-        :type-i
-        :type-r))
+        :type-i))
 (in-package :trivia.balland2006.test)
 
 (defun e (clause)

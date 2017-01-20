@@ -16,8 +16,7 @@
   :description "Test system for trivia.balland2006"
   :license "LLGPL"
   :depends-on (:trivia.balland2006
-               :fiveam
-               :type-r)
+               :fiveam)
   :components ((:module "t"
                 :components
                 ((:file "package"))))
