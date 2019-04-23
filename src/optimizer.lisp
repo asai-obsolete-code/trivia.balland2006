@@ -16,10 +16,20 @@
 (defun balland2006 (clauses types)
   (let ((% clauses))
     (iter (for prev = %)
+          (when *trace-optimization*
+            (format t "~&~<; ~@;Current pattern~_ ~s~:>~%" (list %)))
           (setf % (apply-or-grounding %))
+          (when *trace-optimization*
+            (format t "~&~<; ~@;Grounding result~_ ~s~:>~%" (list %)))
           (setf % (apply-swapping     % types))
+          (when *trace-optimization*
+            (format t "~&~<; ~@;Swapping result~_ ~s~:>~%" (list %)))
           (setf % (apply-fusion       % types))
+          (when *trace-optimization*
+            (format t "~&~<; ~@;Fusion result~_ ~s~:>~%" (list %)))
           (setf % (apply-interleaving % types))
+          (when *trace-optimization*
+            (format t "~&~<; ~@;Interleaving result~_ ~s~:>~%" (list %)))
           (until (equal % prev)))
     %))
 
