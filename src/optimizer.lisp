@@ -2,6 +2,8 @@
 
 (in-package :trivia.balland2006)
 
+(defvar *trace-optimization* nil "if non-nil, prints the debug information")
+
 (defoptimizer :balland2006 (clauses &key types &allow-other-keys)
   (let ((*print-length* 3))
     (balland2006 clauses
@@ -35,7 +37,8 @@
     ((list* (list* (list* 'guard1 _) _) _)
      (list clause))
     ((list* (list* (list* 'or1 subpatterns) rest) body)
-     (format t "~&~<; ~@;Grounding~_ ~s~:>" (list clause))
+     (when *trace-optimization*
+       (format t "~&~<; ~@;Grounding~_ ~s~:>" (list clause)))
      ;; overrides the default or1 compilation
      (mappend (lambda (x)
                 ;; this inflates the code size, but let's ignore it for the sake of speed!
@@ -118,8 +121,9 @@
              (pat*-tmps (mapcar (gensym* "PAT") (pat* c)))
              (pat*-pats (mapcar #'pattern-expand-all pat*-tmps))
              (pat** (mapcar (lambda (c) (subst fusion (sym c) (pat* c))) clauses)))
-        (format t "~&~<; ~@;Fusing~_ ~{~4t~s~^, ~_~}~:>"
-                (list (mapcar (compose #'third #'first #'first) clauses)))
+        (when *trace-optimization*
+          (format t "~&~<; ~@;Fusing~_ ~{~4t~s~^, ~_~}~:>"
+                  (list (mapcar (compose #'third #'first #'first) clauses))))
         ((lambda (result)
            #+nil
            result ;; this results in infinite recursion
@@ -156,10 +160,11 @@
     ((list _) clauses)
     ((list* c1 (and rest1 (list* c2 rest2)))
      (if-let ((c12 (interleave c1 c2 types)))
-       (progn (format t "~&~<; ~@;Interleaving ~_ ~s,~_ ~s~_ under ~s~:>"
-                      (list (third (first (first c1)))
-                            (third (first (first c2)))
-                            under))
+       (progn (when *trace-optimization*
+                (format t "~&~<; ~@;Interleaving ~_ ~s,~_ ~s~_ under ~s~:>"
+                        (list (third (first (first c1)))
+                              (third (first (first c2)))
+                              under)))
               (cons c12 rest2))
        (cons c1 (apply-interleaving rest1 types))))))
 
@@ -196,9 +201,10 @@
           (iter (for i from 1 below len)
                 (for j = (1- i))
                 (when (swappable (aref v i) (aref v j) under)
-                  (format t "~&~<; ~@;Swapping~_ ~s,~_ ~s~_ under ~s~:>"
-                          (list (third (first (first (aref v j))))
-                                (third (first (first (aref v i)))) under))
+                  (when *trace-optimization*
+                    (format t "~&~<; ~@;Swapping~_ ~s,~_ ~s~_ under ~s~:>"
+                            (list (third (first (first (aref v j))))
+                                  (third (first (first (aref v i)))) under)))
                   (rotatef (aref v i) (aref v j))
                   (leave t)))))
     (coerce v 'list)))

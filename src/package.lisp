@@ -15,7 +15,8 @@
    #:apply-swapping
    #:swappable
    #:pattern-dependent
-   #:pattern-dependencies))
+   #:pattern-dependencies
+   #:*trace-optimization*))
 (in-package :trivia.balland2006)
 
 ;; blah blah blah.
