@@ -190,10 +190,10 @@
              ((type-exhaustivep type1 type2 under)
               ;; exhaustive partition
               (with-gensyms (il)
-                `((guard1 (,il :type ,under) t)
-                  (match2*+ ,il ,types
-                    (((guard1 ,(list* s1 o1) ,test1 ,@more1) ,rest1) ,@body1)
-                    (((guard1 ,(list* s2 o2) t      ,@more2) ,rest2) ,@body2)
+                `(((guard1 (,il :type ,under) t))
+                  (match2*+ (,il) ,types
+                    (((guard1 ,(list* s1 o1) ,test1 ,@more1) ,@rest1) ,@body1)
+                    (((guard1 ,(list* s2 o2) t      ,@more2) ,@rest2) ,@body2)
                     ;; 
                     ;;     +-- this (skip) makes the failure propagate upwards correctly
                     ;;    / 
