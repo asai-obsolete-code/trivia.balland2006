@@ -13,6 +13,14 @@
                                        clauses))
                               :initial-element t))))
 
+#|
+
+ debugging memo: to debug the optimizer, set *trace-optimization* to t, and
+ disable one of 4 optimization step below to see which part has the problem.
+
+|#
+
+
 (defun balland2006 (clauses types)
   (let ((% clauses))
     (iter (for prev = %)
