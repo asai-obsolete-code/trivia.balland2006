@@ -1,4 +1,7 @@
 #|
+
+ *** THIS TEST IS NOT USED ANYMORE ***
+
   This file is a part of trivia.balland2006 project.
   Copyright (c) 2015 Masataro Asai (guicho2.71828@gmail.com)
 |#

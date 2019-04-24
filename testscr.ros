@@ -29,8 +29,7 @@ exec ros -Q -- $0 "$@"
   (declare (ignorable argv))
   (uiop:quit (if (every #'fiveam::TEST-PASSED-P
                         (let ((results
-                               (append (test :trivia.balland2006 :trivia.balland2006.test)
-                                       (test :trivia.balland2006.enabled :trivia.balland2006.enabled.test))))
+                               (test :trivia :trivia.balland2006.enabled.test)))
                           (5am:explain! results)
                           results))
                  0 1)))
