@@ -240,7 +240,8 @@
      (multiple-value-bind (type1 ok1) (test-type (? s1 test1))
        (multiple-value-bind (type2 ok2) (test-type (? s2 test2))
          (and (< (sxhash type1) (sxhash type2))
-              (or (and ok1 ok2 (type-disjointp type1 type2 under))
-                  (swappable-rec rest1 rest2 under))))))))
+              ok1 ok2
+              (type-disjointp type1 type2 under)
+              (swappable-rec rest1 rest2 under)))))))
 
 
