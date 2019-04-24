@@ -38,4 +38,5 @@ cache:
     - $HOME/.config/common-lisp
 
 script:
+  - ros install guicho271828/trivia # install the latest
   - ros testscr.ros
